@@ -5,7 +5,7 @@
 #include "doalg.c"
 main(){
 	int N[2] = {100,10000};
-	int K[2] = {10,40};
+	int K[2] = {10,100};
 	int Best[MAXK];
 	int k,n,flag,round,ct,loop,biggest,total;
 
