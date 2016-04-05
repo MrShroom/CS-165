@@ -1,69 +1,83 @@
 #include <stdlib.h>
-void heapify(int *, int, int); // make the ith element the root of a heap
-void buildHeap(int *, int);// makes array a heap represntation 
-int popFromHeap(int *, int *);// pops the max value from the heap
+void modded_quick_sort(int * , int , int, int);
+void quick_sort(int *, int, int);
+int partition(int *, int, int, int);
+void swap(int *, int *);
 
 int doalg(int n, int k, int *Best)
 {
+	printf("Quick\n");
 	if (k > n)//check that we aren't asking for more than we get. 
 	{
 		return 0;
 	}
 
-	int *myHeap = (int *) malloc(sizeof(int) *n);//creat heapspace
-	int heapsize = n;//track heap size
+	int *indexes = (int *) malloc(sizeof(int) *n);//creat heapspace
 
-	//initialize heap to trival assignment  
+	//initialize index to trival assignment  
 	int i = 0;
 	for (; i < n; i++)
 	{
-		myHeap[i] = i + 1;
+		indexes[i] = i + 1;
 	}
 
-	buildHeap(myHeap, heapsize);//make array have "heap structure"
-
-	for (i=0; i < k-1; i++)//pop-off the top K-1 values 
+	modded_quick_sort(indexes, 0, n - 1, k);
+	quick_sort(indexes, 0, k - 1);
+	for (i = 0; i < k; i++)
 	{
-		Best[i] = popFromHeap(myHeap, &heapsize);
+		Best[i] = indexes[i];
 	}
-	Best[k-1] = myHeap[0];//we do this seperate because we don't care if we re-heapify
-	free(myHeap);
+	free(indexes);
 	return 1;
 }
 
-void heapify(int * heap, int n, int i)
+void quick_sort(int * index_array, int left, int right)
 {
-	
-	int left = 2 * i + 1;
-	int right = 2 * i + 2;
-	int largest = i;
+	if (left >= right)
+		return;
+	int current_piviot_value = partition(index_array, left, right, (right +left)/2);
+	quick_sort(index_array, left, current_piviot_value - 1);
+	quick_sort(index_array, current_piviot_value + 1, right);
+}
 
-	if (left < n  && COMPARE(heap[left], heap[i]) == 1)
-		largest = left;
-	if (right < n  && COMPARE(heap[right], heap[largest]) == 1)
-		largest = right;
+void modded_quick_sort(int * index_array, int left, int right, int k)
+{
+	if (left >= right)
+		return ;
+	int current_piviot_value = partition(index_array, left, right, k);
+	if (current_piviot_value + 1 == k)
+		return;
+	if (current_piviot_value + 1 > k)
+		modded_quick_sort(index_array, left, current_piviot_value - 1, k);
+	else
+		modded_quick_sort(index_array, current_piviot_value + 1, right, k);
+}
 
-	int temp;
-	if (i != largest)
+int partition(int *index_array, int left, int right, int k)
+{
+	int pivot_index = index_array[k >= right ? left : k];
+	while ( left < right)
 	{
-		temp = heap[i];
-		heap[i] = heap[largest];
-		heap[largest] = temp;
-		heapify(heap, n, largest);
+		while (COMPARE(index_array[left], pivot_index ) == 1)
+		{			
+			left++;
+		}
+		if (left < right)
+			while (COMPARE( pivot_index,index_array[right]) == 1)
+			{
+				right--;
+			}
+		
+		if(left < right)
+			swap(&index_array[left], &index_array[right]);
 	}
+	
+	return right;
 }
 
-void buildHeap(int *heap, int size)
+void swap(int *a, int *b)
 {
-	int i = size / 2;
-	while (i-->0)
-		heapify(heap, size, i);
-}
-
-int popFromHeap(int *heap, int *heapsize)
-{
-	int out = heap[0];
-	heap[0] = heap[--(*heapsize)];
-	heapify(heap, *heapsize, 0);
-	return out;
+	int temp = *a;
+	*a = *b;
+	*b = temp;
 }
