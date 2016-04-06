@@ -2,8 +2,8 @@
 #define MAXN 10000
 #define MAXK 100
 #include "COMPARE.c"
-#include "doalg.c"
-main(){
+#include "doalgQuickSelect.c"
+int main(){
 	int N[2] = {100,10000};
 	int K[2] = {10,100};
 	int Best[MAXK];
@@ -33,4 +33,6 @@ main(){
 			N[round],K[round],biggest,(1.0*total)/1000);
 		fflush(stdout);
 	}
+
+	return 0;
 }

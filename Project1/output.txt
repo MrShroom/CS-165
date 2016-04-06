@@ -1,0 +1,8 @@
+1000 QuickSelect
+   1 n=  100,  k=10:  maximum= 621,  avg=  268.01
+1000 QuickSelect
+   1 n=10000,  k=100:  maximum= 63269,  avg=21993.20
+1000 Max
+   1 n=  100,  k=10:  maximum= 294,  avg=  278.15
+1000 Max
+   1 n=10000,  k=100:  maximum= 21429,  avg=21229.22
