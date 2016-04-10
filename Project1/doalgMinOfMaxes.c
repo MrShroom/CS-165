@@ -5,12 +5,13 @@ int popFromHeap(int *, int *);// pops the max value from the heap
 
 int doalg(int n, int k, int *Best)
 {
-	static int seen = 0;
+	static int seen = 0;//Delete me later
 	if (seen == 0)
 	{
 		printf("Min\n");
 		seen = 1;
 	}
+
 	if (k > n)//check that we aren't asking for more than we get. 
 	{
 		return 0;
@@ -19,7 +20,7 @@ int doalg(int n, int k, int *Best)
 	int *myHeap = (int *)malloc(sizeof(int) * k);
 	int heapsize = k;//track heap size
 
-	//initialize heap to trival assignment  
+	//initialize heap to first k elements  
 	int i = 1;
 	for (; i <= k; i++)
 	{
