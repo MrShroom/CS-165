@@ -8,6 +8,7 @@ struct avl_node_s {
 	struct avl_node_s *left;
 	struct avl_node_s *right;
 	int value;
+	int isroot;
 };
 
 typedef struct avl_node_s avl_node_t;
@@ -43,7 +44,7 @@ avl_node_t *avl_create_node() {
 	node->left = NULL;
 	node->right = NULL;
 	node->value = 0;
-
+	node->isroot = 0;
 	return node;	
 }
 
@@ -177,7 +178,7 @@ void avl_insert( avl_tree_t *tree, int value, int basic_insert) {
 	if( tree->root == NULL ) {
 		node = avl_create_node();
 		node->value = value;
-
+		node->isroot = 1;
 		tree->root = node;
 
 	/* Okay.  We have a root already.  Where do we put this? */
@@ -187,33 +188,25 @@ void avl_insert( avl_tree_t *tree, int value, int basic_insert) {
 		next = tree->root;
 		while( next != NULL ) {
 			last = next;
-			if (basic_insert) {
-				if( value < next->value ) {
-					next = next->left;
-				} else if( value > next->value ) {
-					next = next->right;
-				}
+			int compared = COMPARE(value, next->value);
+			if (compared == 1) {
+				next = next->left;
+			} else if (compared == 2) {
+				next = next->right;
 			} else {
-				// only insert by compares
-				if (COMPARE(value, next->value) == 1) {
-					next = next->left;
-				} else {
-					next = next->right;
-				}
+				printf("There was an error");
 			}
 		}
 
 		node = avl_create_node();
 		node->value = value;
-		if (basic_insert) {
-			if( value < last->value ) last->left = node;
-			if( value > last->value ) last->right = node;
+		int compared = COMPARE(value, last->value);
+		if (compared == 1) {
+			last->left = node;
+		} else if (compared == 2) {
+			last->right = node;
 		} else {
-			if (COMPARE(value, last->value) == 1) {
-				last->left = node;
-			} else if (COMPARE(last->value, value) == 1) {
-				last->right = node;
-			}
+			printf("There was an error(2)");
 		}
 	}
 
@@ -221,17 +214,17 @@ void avl_insert( avl_tree_t *tree, int value, int basic_insert) {
 }
 
 int transverse(avl_node_t *n, int i, int *Best) {
-	if (n->right != NULL) {
-		i = transverse(n->right, i, Best);
-	}
-
+	if (n->left != NULL) {
+		i = transverse(n->left, i, Best);
+	} 
 	Best[i] = n->value;
 
-	if (n->left != NULL) {
-		i = transverse(n->left, i + 1, Best);
+	if (n->right != NULL) {
+		i = transverse(n->right, i + 1, Best);
+		i--;
 	}
 
-	return i;
+	return i + 1;
 }
 
 int doalg(int n, int k, int *Best) {
@@ -240,11 +233,7 @@ int doalg(int n, int k, int *Best) {
 
 	// build avl tree of size k
 	int i;
-	for (i = 0; i < k; i++) {
-		avl_insert(tree, i, 1);
-	}
-
-	for (i = k; i < n; i++) {
+	for (i = 1; i < n + 1; i++) {
 		avl_insert(tree, i, 0);
 	}
 
@@ -253,5 +242,6 @@ int doalg(int n, int k, int *Best) {
 	for (int i = 0; i < k; i++) {
 		printf("%d,", Best[i]);
 	}
+	printf("\n\n");
 	return 1;
 }
