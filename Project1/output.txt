@@ -6,3 +6,7 @@
    1 n=  100,  k=10:  maximum= 294,  avg=  278.15
 1000 Max
    1 n=10000,  k=100:  maximum= 21429,  avg=21229.22
+Min
+n=  100,  k=10:  maximum= 292,  avg=  233.16
+n=10000,  k=40:  maximum= 12467,  avg=12049.15
+n=10000,  k=100:  maximum= 16523,  avg=15804.31
