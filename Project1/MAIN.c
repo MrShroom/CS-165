@@ -2,7 +2,7 @@
 #define MAXN 10000
 #define MAXK 100
 #include "COMPARE.c"
-#include "avlWithShaunsEdits.c"
+#include "doalgMinOfMaxesWithCaching.c"
 int main(){
 	int N[3] = {100,10000,10000 };
 	int K[3] = {10,40,100};

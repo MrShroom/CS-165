@@ -6,6 +6,7 @@ void swap(int *, int *);
 void heapify(int * heap, int n, int i);
 void buildHeap(int *heap, int size);
 int popFromHeap(int *heap, int *heapsize);
+
 int doalg(int n, int k, int *Best)
 {
 	static int seen = 0;//Delete me later

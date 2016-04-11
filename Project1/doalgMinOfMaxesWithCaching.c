@@ -4,23 +4,29 @@ typedef struct list_s
 {
 	int key;
 	int value;
-	struct list_s * next;
 }list_t;
 
 typedef struct myCacheContainer_s
 {
 	int size;
 	int capacity;
-	list_t **cache;
+	list_t *cache;
 
 }myCacheContainer_t;
 
+//heap functions
 void heapify(int *, int, int, myCacheContainer_t*, int); // make the ith element the root of a heap
 void buildHeap(int *, int, myCacheContainer_t*, int);// makes array a heap represntation 
 int popFromHeap(int *, int *, myCacheContainer_t*, int);// pops the max value from the heap
-void intilizeCache(myCacheContainer_t*, int);
-int compare_using_cache(myCacheContainer_t*, int , int, int);
-void clear_cache_mem(myCacheContainer_t*);
+
+//caching functions
+void intilizeCache(myCacheContainer_t*, int);// get memory for cache
+int compare_using_cache(myCacheContainer_t*, int , int, int);//does look up to see if we has cached the compare befe calling the COMPARE
+int hash(int , int);//simple hashing function
+int get_from_cache(myCacheContainer_t *, int);//retrive element from cache
+void resize_cache(myCacheContainer_t *);//doubles the capacity of the cache
+void set_in_cache(myCacheContainer_t *, int , int );//caches a key value pair
+void clear_cache_mem(myCacheContainer_t*);//frees the memory cache was using
 
 int doalg(int n, int k, int *Best)
 {
@@ -36,10 +42,11 @@ int doalg(int n, int k, int *Best)
 		return 0;
 	}
 	
+	//create a cache
 	myCacheContainer_t *myCache = (myCacheContainer_t *)malloc(sizeof(myCacheContainer_t));
 	intilizeCache(myCache, n);
 
-	int *myHeap = (int *)malloc(sizeof(int) * k);
+	int *myHeap = (int *)malloc(sizeof(int) * k);//create the heap 
 	int heapsize = k;//track heap size
 
 	//initialize heap to first k elements  
@@ -53,14 +60,14 @@ int doalg(int n, int k, int *Best)
 
 	for (; i <= n; i++)
 	{
-		if (COMPARE(myHeap[0], i) == 2)
+		if (compare_using_cache(myCache,n ,myHeap[0], i) == 2)
 		{
 			myHeap[0] = i;
 			heapify(myHeap, k, 0,myCache, n);
 		}
 	}
 
-	for (i= k-1; i >=0 ; i--)//pop-off the top K-1 values 
+	for (i= k-1; i >=0 ; i--)//pop-off the top K values 
 	{
 		Best[i] = popFromHeap(myHeap, &heapsize, myCache, n);
 	}
@@ -71,17 +78,17 @@ int doalg(int n, int k, int *Best)
 
 void heapify(int * heap, int n, int i, myCacheContainer_t* cache, int bigN)
 {
-	
-	int left = 2 * i + 1;
-	int right = 2 * i + 2;
-	int smallest = i;
+	int left = 2 * i + 1;//index of left child
+	int right = 2 * i + 2;//index of right child
+	int smallest = i;//the smallest element between i, left and right
 
-	if (left < n  && compare_using_cache(cache, bigN, heap[left], heap[i]) != 1)
+	//find the smallest
+	if (left < n  && compare_using_cache(cache, bigN, heap[i], heap[left]) == 1)
 		smallest = left;
-	if (right < n  && compare_using_cache(cache, bigN, heap[right], heap[smallest]) != 1)
+	if (right < n  && compare_using_cache(cache, bigN, heap[smallest], heap[right]) == 1)
 		smallest = right;
 
-	if (i != smallest)
+	if (i != smallest)//the root needs to be the smallest
 	{
 		int temp = heap[i];
 		heap[i] = heap[smallest];
@@ -107,11 +114,12 @@ int popFromHeap(int *heap, int *heapsize, myCacheContainer_t* cache, int bigN)
 
 void intilizeCache(myCacheContainer_t *cache, int n)
 {
-	cache->cache = (list_t **)malloc(sizeof(list_t*) * n);
+	cache->cache = (list_t *)malloc(sizeof(list_t) * n);
 	int i;
 	for (i = 0; i < n; i++)
 	{
-		cache->cache[i] = NULL;
+		cache->cache[i].key = -1;
+		cache->cache[i].value = 0;
 	}
 	cache->capacity = n;
 	cache->size = 0;
@@ -119,89 +127,78 @@ void intilizeCache(myCacheContainer_t *cache, int n)
 
 int hash(int num, int size)
 {
-	return (num) % size;
+	//Knuth's multiplicative method:
+	//idea taken from http://stackoverflow.com/questions/664014/what-integer-hash-function-are-good-that-accepts-an-integer-hash-key
+	return (num * 2654435761u) % size;
 }
 
 int get_from_cache(myCacheContainer_t *cache, int key)
 {
 	int hash_result = hash(key, cache->capacity);
-	list_t * current_bin = cache->cache[hash_result];
-	while (current_bin)
+	
+	while (cache->cache[hash_result].key != -1)
 	{
-		if (current_bin->key == key)
-			return current_bin->value;
-		current_bin = current_bin->next;
+		if (cache->cache[hash_result].key == key)
+			return cache->cache[hash_result].value;
+		hash_result = (hash_result + 1) % cache->capacity;
 	}
 	return 0;
 }
 
 void resize_cache(myCacheContainer_t *cache)
 {
-	list_t  **old_cache = cache->cache;
+	list_t  *old_cache = cache->cache;
 	int new_cap = (2 * cache->capacity);
-	cache->cache = (list_t **)malloc(sizeof(list_t*) * new_cap );
+	cache->cache = (list_t *)malloc(sizeof(list_t) * new_cap );
 	int i;
 	for (i = 0; i < new_cap; i++)
 	{
-		cache->cache[i] = NULL;
+		cache->cache[i].key = -1;
+		cache->cache[i].value = 0;
 	}
 
-	list_t  *next_bin;
-	list_t  *current_bin;
-	list_t *new_bin;
 	int current_hash;
+	int current_key;
+	int current_value;
 	for (i = 0; i < cache->capacity; i++)
 	{
-		next_bin = NULL;
-		current_bin = old_cache[i];
-		while (current_bin)
+		current_key = old_cache[i].key;
+		if (current_key != -1)
 		{
-			next_bin = current_bin->next;
-			current_hash = hash(current_bin->value, new_cap);
-			if (!cache->cache[current_hash])
+			current_hash = hash(current_key, new_cap);
+			current_value = old_cache[i].value;
+			while (cache->cache[current_hash].key != -1)
 			{
-				cache->cache[current_hash] = current_bin;
-				current_bin->next = NULL;
+				current_hash = (current_hash + 1) % new_cap;
 			}
-			else
-			{ 
-				new_bin = cache->cache[current_hash];
-				while (new_bin->next != NULL)
-					new_bin = new_bin->next;
-				new_bin->next = current_bin;
-				current_bin->next = NULL;
-			}
-			current_bin = next_bin;
+			cache->cache[current_hash].key = current_key;
+			cache->cache[current_hash].value = current_value;
 		}
-		old_cache[i] = NULL;
+		
 	}
 	cache->capacity = new_cap;
 	free(old_cache);
-
 }
 
 void set_in_cache(myCacheContainer_t *cache, int key, int value)
 {
 	int hash_result = hash(key, cache->capacity);
-	list_t * current_bin = cache->cache[hash_result];
-	while (current_bin)
+	
+	while (cache->cache[hash_result].key != -1)
 	{
-		if (current_bin->key == key)
+		if (cache->cache[hash_result].key != key)
+		{
+			cache->size--;
 			break;
-		current_bin = current_bin->next;
+		}
+		hash_result = (hash_result + 1) % cache->capacity;
 	}
 
-	if (current_bin == NULL)
-	{
-		current_bin = (list_t *)malloc(sizeof(list_t));
-		current_bin->next = cache->cache[hash_result];
-		cache->cache[hash_result] = current_bin;
-		cache->size++;
-	}
-	current_bin->key = key;
-	current_bin->value = value;
+	cache->cache[hash_result].key = key;
+	cache->cache[hash_result].value = value;
+	cache->size++; 
 
-	if (cache->size > cache->capacity * 0.7)
+	if (cache->size > cache->capacity * 0.5)
 	{
 		resize_cache(cache);
 	}
@@ -233,19 +230,6 @@ int compare_using_cache(myCacheContainer_t *cache,int n, int arg1, int arg2)
 
 void clear_cache_mem(myCacheContainer_t * cache)
 {
-	int i;
-	list_t * curent_bin;
-	list_t * next_bin;
-	for ( i = 0; i < cache->capacity; i++)
-	{
-		curent_bin = cache->cache[i];
-		while (curent_bin)
-		{
-			next_bin = curent_bin->next;
-			free(curent_bin);
-			curent_bin = next_bin;
-		}
-	}
 	free(cache->cache);
 	free(cache);
 }
