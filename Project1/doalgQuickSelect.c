@@ -8,7 +8,13 @@ void buildHeap(int *heap, int size);
 int popFromHeap(int *heap, int *heapsize);
 int doalg(int n, int k, int *Best)
 {
-	printf("QuickSelect\n");
+	static int seen = 0;//Delete me later
+	if (seen == 0)
+	{
+		printf("quick select\n");
+		seen = 1;
+	}
+
 	if (k > n)//check that we aren't asking for more than we get. 
 	{
 		return 0;

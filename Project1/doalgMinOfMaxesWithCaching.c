@@ -27,7 +27,7 @@ int doalg(int n, int k, int *Best)
 	static int seen = 0;//Delete me later
 	if (seen == 0)
 	{
-		printf("Min with Caching\n");
+		printf("Min heaps of maxes with Caching\n");
 		seen = 1;
 	}
 
@@ -198,6 +198,7 @@ void set_in_cache(myCacheContainer_t *cache, int key, int value)
 		cache->cache[hash_result] = current_bin;
 		cache->size++;
 	}
+	current_bin->key = key;
 	current_bin->value = value;
 
 	if (cache->size > cache->capacity * 0.7)

@@ -8,7 +8,7 @@ int doalg(int n, int k, int *Best)
 	static int seen = 0;//Delete me later
 	if (seen == 0)
 	{
-		printf("Min\n");
+		printf("Min heap of Maxes\n");
 		seen = 1;
 	}
 

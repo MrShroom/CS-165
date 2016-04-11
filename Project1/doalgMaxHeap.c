@@ -5,7 +5,13 @@ int popFromHeap(int *, int *);// pops the max value from the heap
 
 int doalg(int n, int k, int *Best)
 {
-	printf("Max\n");
+	static int seen = 0;//Delete me later
+	if (seen == 0)
+	{
+		printf("Max Heap\n");
+		seen = 1;
+	}
+
 	if (k > n)//check that we aren't asking for more than we get. 
 	{
 		return 0;
