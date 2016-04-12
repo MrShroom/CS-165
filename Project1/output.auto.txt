@@ -1,20 +1,20 @@
 quick select
-n=  100,  k=10:  maximum= 621,  avg=  268.01
-n=10000,  k=40:  maximum= 50490,  avg=21014.52
-n=10000,  k=100:  maximum= 61813,  avg=21606.44
+n=   10,  k=1:  maximum= 32,  avg=   14.33
+n=  100,  k=10:  maximum= 625,  avg=  267.98
+n=10000,  k=40:  maximum= 48512,  avg=20950.01
+n=10000,  k=100:  maximum= 61074,  avg=22176.52
 Max Heap
-n=  100,  k=10:  maximum= 294,  avg=  278.15
-n=10000,  k=40:  maximum= 19951,  avg=19751.52
-n=10000,  k=100:  maximum= 21399,  avg=21228.36
+n=   10,  k=1:  maximum= 15,  avg=   13.02
+n=  100,  k=10:  maximum= 294,  avg=  278.25
+n=10000,  k=40:  maximum= 19951,  avg=19751.58
+n=10000,  k=100:  maximum= 21399,  avg=21228.38
 Min heap of Maxes
-n=  100,  k=10:  maximum= 292,  avg=  233.16
-n=10000,  k=40:  maximum= 12467,  avg=12049.15
-n=10000,  k=100:  maximum= 16523,  avg=15804.31
+n=   10,  k=1:  maximum= 9,  avg=    9.00
+n=  100,  k=10:  maximum= 296,  avg=  233.31
+n=10000,  k=40:  maximum= 12467,  avg=12049.25
+n=10000,  k=100:  maximum= 16523,  avg=15804.27
 Min heaps of maxes with Caching
-n=  100,  k=10:  maximum= 269,  avg=  215.56
-n=10000,  k=40:  maximum= 12261,  avg=11880.72
-n=10000,  k=100:  maximum= 16096,  avg=15428.41
-AVL
-n=  100,  k=10:  maximum= 340,  avg=  302.10
-n=10000,  k=40:  maximum= 51595,  avg=48035.58
-n=10000,  k=100:  maximum= 60789,  avg=58355.13
+n=   10,  k=1:  maximum= 9,  avg=    9.00
+n=  100,  k=10:  maximum= 275,  avg=  215.37
+n=10000,  k=40:  maximum= 12267,  avg=11885.22
+n=10000,  k=100:  maximum= 16107,  avg=15441.85

@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#define LOAD_FACTOR 0.7 //load factor to resize hashmap used in caching
 
 typedef struct list_s
 {
@@ -44,7 +45,7 @@ int doalg(int n, int k, int *Best)
 	
 	//create a cache
 	myCacheContainer_t *myCache = (myCacheContainer_t *)malloc(sizeof(myCacheContainer_t));
-	intilizeCache(myCache, n);
+	intilizeCache(myCache , 2 * n);//good cache size to start is 2 time n via trial and error
 
 	int *myHeap = (int *)malloc(sizeof(int) * k);//create the heap 
 	int heapsize = k;//track heap size
@@ -60,17 +61,27 @@ int doalg(int n, int k, int *Best)
 
 	for (; i <= n; i++)
 	{
-		if (compare_using_cache(myCache,n ,myHeap[0], i) == 2)
+		if (compare_using_cache(myCache, n, i, myHeap[0] ) == 1)
 		{
 			myHeap[0] = i;
 			heapify(myHeap, k, 0,myCache, n);
 		}
 	}
 
-	for (i= k-1; i >=0 ; i--)//pop-off the top K values 
+	if (k == 1)
 	{
-		Best[i] = popFromHeap(myHeap, &heapsize, myCache, n);
+		Best[0] = myHeap[0];
 	}
+	else 
+	{
+		for (i = k - 1; i >= 2; i--)//pop-off the top K values 
+		{
+			Best[i] = popFromHeap(myHeap, &heapsize, myCache, n);
+		}
+		Best[1] = myHeap[0];
+		Best[0] = myHeap[1];
+	}
+
 	free(myHeap);
 	clear_cache_mem(myCache);
 	return 1;
@@ -83,7 +94,7 @@ void heapify(int * heap, int n, int i, myCacheContainer_t* cache, int bigN)
 	int smallest = i;//the smallest element between i, left and right
 
 	//find the smallest
-	if (left < n  && compare_using_cache(cache, bigN, heap[i], heap[left]) == 1)
+	if (left < n  && compare_using_cache(cache, bigN, heap[smallest], heap[left]) == 1)
 		smallest = left;
 	if (right < n  && compare_using_cache(cache, bigN, heap[smallest], heap[right]) == 1)
 		smallest = right;
@@ -150,6 +161,7 @@ void resize_cache(myCacheContainer_t *cache)
 	list_t  *old_cache = cache->cache;
 	int new_cap = (2 * cache->capacity);
 	cache->cache = (list_t *)malloc(sizeof(list_t) * new_cap );
+	
 	int i;
 	for (i = 0; i < new_cap; i++)
 	{
@@ -198,16 +210,18 @@ void set_in_cache(myCacheContainer_t *cache, int key, int value)
 	cache->cache[hash_result].value = value;
 	cache->size++; 
 
-	if (cache->size > cache->capacity * 0.5)
+	if (cache->size > (cache->capacity * LOAD_FACTOR))
 	{
 		resize_cache(cache);
 	}
 }
 
 
-
 int compare_using_cache(myCacheContainer_t *cache,int n, int arg1, int arg2)
 {
+	if (arg1 == arg2)
+		return 0;
+
 	int cache_pos = (arg1-1) * n + (arg2-1);
 	int returned_from_cache = get_from_cache(cache, cache_pos);
 
