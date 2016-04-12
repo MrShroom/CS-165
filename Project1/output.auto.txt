@@ -18,3 +18,8 @@ n=   10,  k=1:  maximum= 9,  avg=    9.00
 n=  100,  k=10:  maximum= 275,  avg=  215.37
 n=10000,  k=40:  maximum= 12267,  avg=11885.22
 n=10000,  k=100:  maximum= 16107,  avg=15441.85
+AVL
+n=   10,  k=1:  maximum= 9,  avg=    9.00
+n=  100,  k=10:  maximum= 340,  avg=  302.11
+n=10000,  k=40:  maximum= 51595,  avg=48036.81
+n=10000,  k=100:  maximum= 60789,  avg=58355.60

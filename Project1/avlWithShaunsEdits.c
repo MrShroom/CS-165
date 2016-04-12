@@ -224,7 +224,16 @@ void avl_insert( avl_tree_t *tree, int value, int basic_insert, int k) {
 			prev = smallest_node;
 			smallest_node = smallest_node->right;
 		}
-		prev->right = smallest_node->left;
+
+		if (smallest_node == tree->root)
+		{
+			tree->root = smallest_node->left;
+		}
+		else
+		{
+			prev->right = smallest_node->left;
+			
+		}
 		free(smallest_node);
 		tree->size--;
 	}
