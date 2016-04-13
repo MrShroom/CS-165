@@ -2,14 +2,14 @@
 #define MAXN 10000
 #define MAXK 100
 #include "COMPARE.c"
-#include "doalgMinOfMaxesWithCaching.c"
+#include "avlWithShaunsEdits.c"
 int main(){
-	int N[3] = {100,10000,10000 };
-	int K[3] = {10,40,100};
+	int N[4] = {10,100,10000,10000 };
+	int K[4] = {1,10,40,100};
 	int Best[MAXK];
 	int k,n,flag,round,ct,loop,biggest,total;
 
-	for (round=0; round<3; round++) {
+	for (round=0; round<4; round++) {
 		total = 0;
 		biggest = -1;
 		for (loop=0; loop<1000; loop++) {
