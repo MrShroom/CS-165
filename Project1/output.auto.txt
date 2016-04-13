@@ -15,7 +15,7 @@ n=10000,  k=40:  maximum= 12467,  avg=12049.25
 n=10000,  k=100:  maximum= 16523,  avg=15804.27
 Min heaps of maxes with Caching
 n=   10,  k=1:  maximum= 9,  avg=    9.00
-n=  100,  k=10:  maximum= 275,  avg=  215.37
+n=  100,  k=10:  maximum= 275,  avg=  215.36
 n=10000,  k=40:  maximum= 12267,  avg=11885.22
 n=10000,  k=100:  maximum= 16107,  avg=15441.85
 AVL
