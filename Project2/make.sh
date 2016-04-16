@@ -12,7 +12,7 @@ if [ -f $file ]; then
 	fi
 	ln -s $file mysub.c
 	ls
-	make
+	make debug
 else
 	echo "File does not exist"
 fi
