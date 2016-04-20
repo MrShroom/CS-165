@@ -1,7 +1,7 @@
 #include <stdio.h>
 #define MAXN 10000
 #include "QCOUNT.c"
-#include "mysub.c"
+#include "mysubLinear.c"
 
 main(){
 	int N[3] = {20,200,2000};

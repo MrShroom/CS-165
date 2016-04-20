@@ -4,6 +4,7 @@
 #define ONE_DIFFERENT  2
 #define EVEN_DIVIDE    0
 #define GROUP_SIZE     4
+#define DEBUG
 typedef struct group_t {
 	int indexes[GROUP_SIZE];
 	int status;
@@ -18,6 +19,9 @@ void setgroup(group* thegroup, int start) {
 }
 
 int mysub (int n) {
+#ifdef DEBUG
+	QCOUNT(-1);
+#endif
 	int majority = 0; // will eventually be >= n / 2 
 	int minority = 0;
 	int majority_index = 0;
@@ -28,29 +32,29 @@ int mysub (int n) {
 
 	// loop over 0 to n - 4
 	int i;
-	for (i = 1; i <= n - GROUP_SIZE; i += GROUP_SIZE) {
+	for (i = 1; i <= n; i += GROUP_SIZE) {
 		group *temp = (group*)malloc(sizeof(group));
 		setgroup(temp, i);
 		if(temp->status == EVEN_DIVIDE)
 		{
 #ifdef DEBUG
-			printf("Setting %i to EVEN_DIVIDE", i);
+			printf("Setting %i to EVEN_DIVIDE\n", i);
 #endif
 			free(temp);
 		}
 		else if(temp->status == ALL_SAME)
 		{
 #ifdef DEBUG
-			printf("Setting %i to ALL_SAME", i);
+			printf("Setting %i to ALL_SAME\n", i);
 #endif
-			all_4_bin[++all_4_bin_size] = temp;
+			all_4_bin[all_4_bin_size++] = temp;
 		}
 		else if(temp->status == ONE_DIFFERENT)
 		{
 #ifdef DEBUG
-			printf("Setting %i to ONE_DIFFERENT", i);
+			printf("Setting %i to ONE_DIFFERENT\n", i);
 #endif
-			one_to_3_bin[++one_to_3_bin_size] = temp;
+			one_to_3_bin[one_to_3_bin_size++] = temp;
 		}
 
 	}
@@ -187,6 +191,10 @@ int mysub (int n) {
 			}
 		}
 	} 
+
+#ifdef DEBUG
+	printf("Majority count = %d\nMinority count = %d\n", majority, minority);
+#endif // DEBUG
 
 	return majority_index;
 }
