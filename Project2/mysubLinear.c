@@ -24,6 +24,7 @@ int mysub (int n, int loop) {
 	int majority = 0; // will eventually be >= n / 2 
 	int minority = 0;
 	int majority_index = 0;
+	int minority_index = -1;
 	group **all_4_bin = (group**)malloc(sizeof(group*) * ((n + GROUP_SIZE)/GROUP_SIZE));
 	int all_4_bin_size =0;
 	group **one_to_3_bin = (group**)malloc(sizeof(group*) * ((n + GROUP_SIZE)/GROUP_SIZE));
@@ -63,7 +64,6 @@ int mysub (int n, int loop) {
 		// ASSUME master is majority, may swap later.
 		master = all_4_bin[0];
 		majority_index = master->indexes[0];
-		int minority_index = 0;
 		majority = 4;
 		for (i = 1; i < all_4_bin_size; i++) {
 			group temp_group;
@@ -112,11 +112,12 @@ int mysub (int n, int loop) {
 
 					if (status != ONE_DIFFERENT) {
 						master_group_index = i;
-						master_group_index_of_index_array = j;
 						if (status == EVEN_DIVIDE) {
 							local_majority_index = one_to_3_bin[i]->indexes[j];
+							master_group_index_of_index_array = j;
 						} else {
-							local_majority_index = one_to_3_bin[i]->indexes[j+1 % GROUP_SIZE];
+							local_majority_index = one_to_3_bin[i]->indexes[(j+1) % GROUP_SIZE];
+							master_group_index_of_index_array = (j+1) % GROUP_SIZE;
 						}
 						local_majority_count += 3;
 						local_minority_count += 1;
@@ -142,7 +143,8 @@ int mysub (int n, int loop) {
 					if(status == EVEN_DIVIDE )
 					{
 						// does it match the majority.
-						if(QCOUNT(1, temp_group2.indexes) == EVEN_DIVIDE) {
+						status = QCOUNT(1, temp_group2.indexes);
+						if(status == EVEN_DIVIDE) {
 							local_majority_count += 1;
 							local_minority_count += 3;
 						} else {
@@ -153,10 +155,11 @@ int mysub (int n, int loop) {
 					}
 					else if(status == ALL_SAME)
 					{
-						local_minority_index = one_to_3_bin[i]->indexes[j + 1 % GROUP_SIZE];
-						temp_group2.indexes[master_group_index_of_index_array] = one_to_3_bin[i]->indexes[j + 1 % GROUP_SIZE];
+						local_minority_index = one_to_3_bin[i]->indexes[(j + 1) % GROUP_SIZE];
+						temp_group2.indexes[master_group_index_of_index_array] = one_to_3_bin[i]->indexes[(j + 1) % GROUP_SIZE];
 						// does it match the majority.
-						if(QCOUNT(1, temp_group2.indexes) != ALL_SAME) {
+						status = QCOUNT(1, temp_group2.indexes);
+						if(status == EVEN_DIVIDE) {
 							local_majority_count += 1;
 							local_minority_count += 3;
 						} else {
@@ -203,8 +206,7 @@ int mysub (int n, int loop) {
 
 				if (majority < minority) {
 					// swap
-					
-					majority_index = local_minority_index;
+					majority_index = minority_index == -1 ? local_minority_index : minority_index;
 				}
 				else if (majority == minority)
 				{
@@ -216,6 +218,7 @@ int mysub (int n, int loop) {
 
 #ifdef DEBUG
 	printf("Majority count = %d\nMinority count = %d\n", majority, minority);
+	printf("Returning %d\n", majority_index);
 #endif // DEBUG
 
 	return majority_index;
