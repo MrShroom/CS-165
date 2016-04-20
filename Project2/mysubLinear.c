@@ -17,7 +17,7 @@ void setgroup(group* thegroup, int start) {
 	thegroup->status = QCOUNT(1, thegroup->indexes);
 }
 
-int mysub (int n) {
+int mysub (int n, int loop) {
 #ifdef DEBUG
 	QCOUNT(-1);
 #endif
@@ -156,7 +156,7 @@ int mysub (int n) {
 						local_minority_index = one_to_3_bin[i]->indexes[j + 1 % GROUP_SIZE];
 						temp_group2.indexes[master_group_index_of_index_array] = one_to_3_bin[i]->indexes[j + 1 % GROUP_SIZE];
 						// does it match the majority.
-						if(QCOUNT(1, temp_group2.indexes) == EVEN_DIVIDE) {
+						if(QCOUNT(1, temp_group2.indexes) != ALL_SAME) {
 							local_majority_count += 1;
 							local_minority_count += 3;
 						} else {
@@ -177,9 +177,17 @@ int mysub (int n) {
 			local_majority_index = local_minority_index;
 		}
 
+#ifdef DEBUG
+	printf("Local majority count = %d\nLocal minority count = %d\n", local_majority_count, local_minority_count);
+#endif // DEBUG
+		if (local_majority_count == local_minority_count) {
+			printf("Local counts are the same");
+		}
+
 		if (all_4_bin_size == 0) 
 		{
-			majority_index = local_majority_index;
+			if (local_majority_count != local_minority_count)
+				majority_index = local_majority_index;
 		}
 		else {
 			// make sure our local majority matches the all by 4 majority.
