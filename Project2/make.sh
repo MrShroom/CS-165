@@ -18,7 +18,6 @@ if [ -f $file ]; then
 		rm mysub.c
 	fi
 	ln -s $file mysub.c
-	ls
 	make $target
 else
 	echo "File does not exist"

@@ -1,1 +1,1 @@
-mysubBruteForce.c
+mysubLinear.c

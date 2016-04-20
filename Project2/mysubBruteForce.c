@@ -7,7 +7,6 @@ typedef struct node {
 	int c;
 	int d;
 	int status;
-	struct node *next;
 } node;
 
 typedef struct list_s {
@@ -18,8 +17,10 @@ typedef struct list_s {
 void logmsg(char *msg);
 void lognode(node *d);
 void getstatus(node*);
+node findgroupoffour(int);
 int docompare(int,int,int,int);
 int findoneoff(int,int);
+int findoneoff_node(node,int);
 int getnextelement(int,int);
 int claimzero(int*,int);
 int claimnotzero(int*,int);
@@ -31,19 +32,17 @@ int mysub (int n) {
 	int notsame=0, notzero=-1;
 	int anyallsame=0;
 	char msg[100];
+	node spot;
+	spot.a = -1;
 #ifdef DEBUG
 	QCOUNT(-1);
 #endif
-	list_t *list;
-	list = (list_t*)malloc(sizeof(list_t));
-	list->list = (node*)malloc(sizeof(node) * n);
-
 	int *current_majorities = (int*)malloc(sizeof(int) * n), value=-1;
 	memcpy(current_majorities, &value, sizeof(int)*n);
 
 	// build the lists up.
 	int i = 0, container_size=0;
-	for (i = 1; i < n; i+=4) {
+	for (i = 0; i < n; i+=4) {
 		node *datum = (node*)malloc(sizeof(node));
 		datum->a = i;
 		datum->b = i + 1;
@@ -64,7 +63,10 @@ int mysub (int n) {
 	for (i = 0; i < container_size; i++) {
 		if (current_majorities[i] == ALL_SAME) {
 			anyallsame = 1;
-			if (claimzero(&zero, i)) sameaszero += 4;
+			if (claimzero(&zero, i)) {
+				sameaszero += 4;
+				zero = i * 4 + 1;
+			}
 			for (j = i + 1; j < container_size; j++) {
 				if (current_majorities[j] == ALL_SAME) {
 					// create a new group of four, see if they are the same.
@@ -120,7 +122,38 @@ int mysub (int n) {
 			}
 		}
 	} else {
-		// handle all one different elements.
+		spot = findgroupoffour(0);
+		logmsg("The spot of four I found was");
+		lognode(&spot);
+		char msg[100];
+		zero = spot.a;
+		for (i = 0; i < container_size; i++) {
+			if (current_majorities[i] == ONE_DIFFERENT) {
+				int diff = findoneoff_node(spot, i);
+				if (diff == -1) continue;
+				sprintf(msg, "Group %d has one different element at %d based on this node", j, diff);
+				logmsg(msg);
+				lognode(&spot);
+				int j = 0, count = 0, next = getnextelement(i, diff);
+				while (j < 3) { // we need three compares to verify the the grouping
+					if (next != spot.a && next != spot.b && next != spot.c && next != spot.d) {
+						int status = docompare(spot.a-1, spot.b-1, spot.c-1, next);
+						count += status == ALL_SAME ? 1 : -1;
+						next = getnextelement(i, diff + ++j);
+					} else j++;
+				}
+				if (count > 0) {
+					sprintf(msg, "Group %d mostly the same", i);
+					sameaszero += 3;
+					notsame += 1;
+				} else {
+					sprintf(msg, "Group %d are mostly different", i);
+					sameaszero += 1;
+					notsame += 3;
+				}
+				logmsg(msg);
+			}
+		}
 	}
 
 	sprintf(msg, "Current counts are %d same as zero and %d not the same", sameaszero, notsame);
@@ -136,14 +169,22 @@ int mysub (int n) {
 	logmsg(msg);
 
 	if (sameaszero > notsame) {
-		return zero * 4 + 1;
+		return zero;
 	} else {
 		// search forward...then backward...O(N). Technically N - 3
 		int group[4];
-		group[0] = zero * 4;
-		group[1] = zero * 4 + 1;
-		group[2] = zero * 4 + 2;
-		for (i = zero*4 + 2; i < n; i++) {
+		if (spot.a == -1) {
+			group[0] = zero * 4;
+			group[1] = zero * 4 + 1;
+			group[2] = zero * 4 + 2;
+			i = zero*4 + 2;
+		} else {
+			group[0] = spot.a;
+			group[1] = spot.b;
+			group[2] = spot.c;
+			i = spot.d;
+		}
+		for (; i < n; i++) {
 			group[3] = i;
 			if (QCOUNT(1, group) == ONE_DIFFERENT) return i;
 		}
@@ -161,10 +202,7 @@ int getnextelement(int j, int diff) {
 }
 
 void getstatus(node *elem) {
-	int *indexs = (int*)malloc(sizeof(int) * 4);
-	indexs[0] = elem->a; indexs[1] = elem->b; indexs[2] = elem->c;
-	indexs[3] = elem->d;
-	elem->status = QCOUNT(1, indexs);
+	elem->status = docompare(elem->a, elem->b, elem->c, elem->d);
 }
 
 int docompare(int a, int b, int c, int d) {
@@ -173,7 +211,8 @@ int docompare(int a, int b, int c, int d) {
 	group[1] = b+1;
 	group[2] = c+1;
 	group[3] = d+1;
-	return QCOUNT(1, group);
+	int status = QCOUNT(1, group);
+	return status;
 }
 
 // will return the index of the different element
@@ -184,6 +223,21 @@ int findoneoff(int majority, int oneoff) {
 	group[0] = majority+1;
 	group[1] = majority+2;
 	group[2] = majority+3;
+	for (i= 0; i < 4; i++) {
+		group[3] = oneoff + i + 1;
+		int result = QCOUNT(1, group);
+		if (result == ONE_DIFFERENT) return oneoff + i + 1;
+	}
+
+	return -1;
+}
+
+int findoneoff_node(node majority, int oneoff) {
+	int i, group[4];
+	oneoff *= 4;
+	group[0] = majority.a;
+	group[1] = majority.b;
+	group[2] = majority.c;
 	for (i= 0; i < 4; i++) {
 		group[3] = oneoff + i + 1;
 		int result = QCOUNT(1, group);
@@ -217,14 +271,75 @@ int claimzero(int *zero, int position) {
 	}
 }
 
+node findgroupoffour(int start) {
+	// this whole process will take 7! compares
+	int spots[4], offsets[4], max = 7, status = -1;
+	spots[0] = offsets[0] = 0;
+	spots[1] = offsets[1] = 1;
+	spots[2] = offsets[2] = 2;
+	spots[3] = offsets[3] = 3;
+	while (status != ALL_SAME) {
+		if (spots[0] == max - 3 && spots[3] == max) {
+			// we need error.
+			break;
+		}
+		if (spots[3] == max) {
+			spots[3] = ++offsets[3];
+			spots[2] = ++offsets[2];
+		} else if (spots[2] == max - 1) {
+			spots[2] = ++offsets[2];
+			spots[1] = ++offsets[1];
+		} else if (spots[1] == max - 2) {
+			spots[1] = ++offsets[1];
+			spots[0] = ++offsets[0];
+		} else if (spots[0] == max - 3) {
+			spots[0] = ++offsets[0];
+		} else {
+			spots[3]++;
+		}
+
+		status = docompare(spots[0], spots[1], spots[2], spots[3]);
+	}
+
+	node spot;
+	spot.a = spots[0] + 1;
+	spot.b = spots[1] + 1;
+	spot.c = spots[2] + 1;
+	spot.d = spots[3] + 1;
+	return spot;
+}
+// }
+// 	// three compares: first, second, first, second
+// 	//				   third, fourth, third, fourth
+// 	//				   second, third, second, third
+// 	int first_group_result = docompare(zero * 4, zero * 4 + 1, i * 4, i * 4 + 1),
+// 		second_group_result = docompare(zero * 4 + 2, zero * 4 + 3, i * 4 + 2, i * 4 + 3),
+// 		third_group_result = docompare(zero * 4 + 1, zero * 4 + 2, i * 4 + 1, i * 4 + 2);
+
+// 	if (first_group_result == ONE_DIFFERENT) {
+// 		if (third_group_result == EVEN_DIVIDE || second_group_result == EVEN_DIVIDE) {
+// 			// three go to the majority, 1 to the minority.
+// 			return 3;
+// 		} else if (third_group_result == ONE_DIFFERENT && second_group_result == ONE_DIFFERENT) {
+// 			// three go to the majority, 1 to the minority.
+// 			return 3;
+// 		} else if (third_group_result == ALL_SAME && )
+// 	} else if (first_group_result == ALL_SAME) {
+
+// 	} else {
+
+// 	}
+
 void logmsg(char *msg) {
 #ifdef DEBUG
 	printf("%s\n", msg);
+	fflush(stdout);
 #endif
 }
 
 void lognode(node *d) {
 #ifdef DEBUG
 	printf("{%d,%d,%d,%d}=%d\n", d->a, d->b, d->c, d->d, d->status);
+	fflush(stdout);
 #endif
 }
