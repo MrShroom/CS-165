@@ -4,7 +4,6 @@
 #define ONE_DIFFERENT  2
 #define EVEN_DIVIDE    0
 #define GROUP_SIZE     4
-#define DEBUG
 typedef struct group_t {
 	int indexes[GROUP_SIZE];
 	int status;
@@ -102,27 +101,37 @@ int mysub (int n) {
 			int offset = one_to_3_bin[i]->indexes[3]+1 % n;
 			group temp_group;
 			int j;
-			for (j = 0; j < GROUP_SIZE; j++) {
-				temp_group.indexes[0] = one_to_3_bin[i]->indexes[0];
-				temp_group.indexes[1] = one_to_3_bin[i]->indexes[1];
-				temp_group.indexes[2] = one_to_3_bin[i]->indexes[2];
-				temp_group.indexes[3] = one_to_3_bin[i]->indexes[3];
-				temp_group.indexes[j] = offset;
-				int status = QCOUNT(1, temp_group.indexes);
+			if (local_majority_index == -1) {
+				for (j = 0; j < GROUP_SIZE; j++) {
+					temp_group.indexes[0] = one_to_3_bin[i]->indexes[0];
+					temp_group.indexes[1] = one_to_3_bin[i]->indexes[1];
+					temp_group.indexes[2] = one_to_3_bin[i]->indexes[2];
+					temp_group.indexes[3] = one_to_3_bin[i]->indexes[3];
+					temp_group.indexes[j] = offset;
+					int status = QCOUNT(1, temp_group.indexes);
 
-				if (local_majority_index == -1 && status != ONE_DIFFERENT) {
-					local_majority_index = one_to_3_bin[i]->indexes[j];
-					master_group_index = i;
-					master_group_index_of_index_array = j;
-					if (status == EVEN_DIVIDE) {
-						local_majority_count += 3;
-						local_minority_count += 1;
-					} else {
-						local_majority_count += 1;
-						local_minority_count += 3;
+					if (status != ONE_DIFFERENT) {
+						local_majority_index = one_to_3_bin[i]->indexes[j];
+						master_group_index = i;
+						master_group_index_of_index_array = j;
+						if (status == EVEN_DIVIDE) {
+							local_majority_count += 3;
+							local_minority_count += 1;
+						} else {
+							local_majority_count += 1;
+							local_minority_count += 3;
+						}
 					}
-				} else {
+				}
+			} else {
+				for (j = 0; j < GROUP_SIZE; j++) {
 					group temp_group2;
+					temp_group.indexes[0] = one_to_3_bin[i]->indexes[0];
+					temp_group.indexes[1] = one_to_3_bin[i]->indexes[1];
+					temp_group.indexes[2] = one_to_3_bin[i]->indexes[2];
+					temp_group.indexes[3] = one_to_3_bin[i]->indexes[3];
+					temp_group.indexes[j] = offset;
+					int status = QCOUNT(1, temp_group.indexes);
 					temp_group2.indexes[0] = one_to_3_bin[master_group_index]->indexes[0];
 					temp_group2.indexes[1] = one_to_3_bin[master_group_index]->indexes[1];
 					temp_group2.indexes[2] = one_to_3_bin[master_group_index]->indexes[2];
