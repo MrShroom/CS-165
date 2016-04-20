@@ -92,16 +92,16 @@ int mysub (int n) {
 	if (majority <= n / 2 && one_to_3_bin_size > 0) {
 		int local_majority_count=0;
 		int local_minority_count=0;
-		int local_majority_index =-1;//unknown yet
+		int local_majority_index =-2;//unknown yet
 		int local_minority_index = -1;
 		int master_group_index = -1;
 		int master_group_index_of_index_array = -1;
 		for (i = 0; i < one_to_3_bin_size; i++) 
 		{
-			int offset = one_to_3_bin[i]->indexes[3]+1 % n;
+			int offset = (one_to_3_bin[i]->indexes[3]+1) % n;
 			group temp_group;
 			int j;
-			if (local_majority_index == -1) {
+			if (local_majority_index < 0) {
 				for (j = 0; j < GROUP_SIZE; j++) {
 					temp_group.indexes[0] = one_to_3_bin[i]->indexes[0];
 					temp_group.indexes[1] = one_to_3_bin[i]->indexes[1];
@@ -111,19 +111,20 @@ int mysub (int n) {
 					int status = QCOUNT(1, temp_group.indexes);
 
 					if (status != ONE_DIFFERENT) {
-						local_majority_index = one_to_3_bin[i]->indexes[j];
 						master_group_index = i;
 						master_group_index_of_index_array = j;
 						if (status == EVEN_DIVIDE) {
-							local_majority_count += 3;
-							local_minority_count += 1;
+							local_majority_index = one_to_3_bin[i]->indexes[j];
 						} else {
-							local_majority_count += 1;
-							local_minority_count += 3;
+							local_majority_index = one_to_3_bin[i]->indexes[j+1 % GROUP_SIZE];
 						}
+						local_majority_count += 3;
+						local_minority_count += 1;
+						break;
 					}
 				}
 			} else {
+				int a = 1;
 				for (j = 0; j < GROUP_SIZE; j++) {
 					group temp_group2;
 					temp_group.indexes[0] = one_to_3_bin[i]->indexes[0];
@@ -142,17 +143,18 @@ int mysub (int n) {
 					{
 						// does it match the majority.
 						if(QCOUNT(1, temp_group2.indexes) == EVEN_DIVIDE) {
-							local_majority_count += 3;
-							local_minority_count += 1;
-						} else {
 							local_majority_count += 1;
 							local_minority_count += 3;
+						} else {
+							local_majority_count += 3;
+							local_minority_count += 1;
 						}
 						break;
 					}
 					else if(status == ALL_SAME)
 					{
-						local_minority_index = one_to_3_bin[i]->indexes[j];
+						local_minority_index = one_to_3_bin[i]->indexes[j + 1 % GROUP_SIZE];
+						temp_group2.indexes[master_group_index_of_index_array] = one_to_3_bin[i]->indexes[j + 1 % GROUP_SIZE];
 						// does it match the majority.
 						if(QCOUNT(1, temp_group2.indexes) == EVEN_DIVIDE) {
 							local_majority_count += 1;
@@ -167,15 +169,18 @@ int mysub (int n) {
 			}
 		}
 
-		if (local_minority_count > local_majority_index) {
+		if (local_minority_count > local_majority_count) {
 			// swap
 			int temp = local_minority_count;
-			local_minority_count = local_majority_index;
-			local_majority_index = temp;
+			local_minority_count = local_majority_count;
+			local_majority_count = temp;
 			local_majority_index = local_minority_index;
 		}
 
-		if (all_4_bin_size == 0) majority_index = local_majority_index;
+		if (all_4_bin_size == 0) 
+		{
+			majority_index = local_majority_index;
+		}
 		else {
 			// make sure our local majority matches the all by 4 majority.
 			group temp_group;
