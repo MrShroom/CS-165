@@ -86,7 +86,7 @@ int mysub (int n, int loop) {
 			majority = temp;
 			majority_index = minority_index;
 			minority_index = majority_index;
-		}
+		} 
 	}
 
 	if (majority <= n / 2 && one_to_3_bin_size > 0) {
@@ -96,6 +96,8 @@ int mysub (int n, int loop) {
 		int local_minority_index = -1;
 		int master_group_index = -1;
 		int master_group_index_of_index_array = -1;
+		int master_majority_index = 0;
+		int master_minority_index = 0;
 		for (i = 0; i < one_to_3_bin_size; i++) 
 		{
 			int offset = (one_to_3_bin[i]->indexes[3]+1) % n;
@@ -113,14 +115,19 @@ int mysub (int n, int loop) {
 					if (status != ONE_DIFFERENT) {
 						master_group_index = i;
 						if (status == EVEN_DIVIDE) {
-							local_majority_index = one_to_3_bin[i]->indexes[j];
+							master_majority_index = local_majority_index = one_to_3_bin[i]->indexes[j];
+							master_minority_index = local_minority_index = offset;
 							master_group_index_of_index_array = j;
 						} else {
-							local_majority_index = one_to_3_bin[i]->indexes[(j+1) % GROUP_SIZE];
+							master_majority_index = local_majority_index = one_to_3_bin[i]->indexes[(j+1) % GROUP_SIZE];
+							master_minority_index = local_minority_index = one_to_3_bin[i]->indexes[j];
 							master_group_index_of_index_array = (j+1) % GROUP_SIZE;
 						}
 						local_majority_count += 3;
 						local_minority_count += 1;
+#ifdef DEBUG
+							printf("1.) i=%d\tlocal_majority_index=%d\tlocal_minority_index=%d\n", i, local_majority_index, local_minority_index);
+#endif
 						break;
 					}
 				}
@@ -142,29 +149,43 @@ int mysub (int n, int loop) {
 
 					if(status == EVEN_DIVIDE )
 					{
-						// does it match the majority.
 						status = QCOUNT(1, temp_group2.indexes);
+						local_majority_index = one_to_3_bin[i]->indexes[j]; // always true.
+						local_minority_index = offset;
 						if(status == EVEN_DIVIDE) {
 							local_majority_count += 1;
 							local_minority_count += 3;
+#ifdef DEBUG
+							printf("2.1.) Mostly minority i=%d\tlocal_majority_index=%d\tlocal_minority_index=%d\n", i, local_majority_index, local_minority_index);
+#endif
 						} else {
 							local_majority_count += 3;
 							local_minority_count += 1;
+#ifdef DEBUG
+							printf("2.2.) Mostly majority i=%d\t(status=%d\toffset=%d)\tlocal_majority_index=%d\tlocal_minority_index=%d\n", i, status, offset, local_majority_index, local_minority_index);
+#endif
 						}
 						break;
 					}
 					else if(status == ALL_SAME)
 					{
-						local_minority_index = one_to_3_bin[i]->indexes[(j + 1) % GROUP_SIZE];
-						temp_group2.indexes[master_group_index_of_index_array] = one_to_3_bin[i]->indexes[(j + 1) % GROUP_SIZE];
+						local_minority_index = one_to_3_bin[i]->indexes[j];
+						local_majority_index = one_to_3_bin[i]->indexes[(j + 1) % GROUP_SIZE];
+						temp_group2.indexes[master_group_index_of_index_array] = local_majority_index;
 						// does it match the majority.
 						status = QCOUNT(1, temp_group2.indexes);
 						if(status == EVEN_DIVIDE) {
 							local_majority_count += 1;
 							local_minority_count += 3;
+#ifdef DEBUG
+							printf("3.1.) Mostly minority i=%d\tstatus=%d\tlocal_majority_index=%d\tlocal_minority_index=%d\n", i, status, local_majority_index, local_minority_index);
+#endif
 						} else {
 							local_majority_count += 3;
 							local_minority_count += 1;
+#ifdef DEBUG
+							printf("3.2.) Mostly majority i=%d\t(status=%d\toffset=%d)\tlocal_majority_index=%d\tlocal_minority_index=%d\n", i, status, offset, local_majority_index, local_minority_index);
+#endif
 						}
 						break;
 					}
@@ -172,49 +193,71 @@ int mysub (int n, int loop) {
 			}
 		}
 
-		if (local_minority_count > local_majority_count) {
-			// swap
-			int temp = local_minority_count;
-			local_minority_count = local_majority_count;
-			local_majority_count = temp;
-			local_majority_index = local_minority_index;
-		}
-
 #ifdef DEBUG
-	printf("Local majority count = %d\nLocal minority count = %d\n", local_majority_count, local_minority_count);
-#endif // DEBUG
+		printf("Local majority count = %d\tLocal minority count = %d\n", local_majority_count, local_minority_count);
 		if (local_majority_count == local_minority_count) {
-			printf("Local counts are the same");
+			printf("Local counts are the same\n");
 		}
+#endif
 
 		if (all_4_bin_size == 0) 
 		{
-			if (local_majority_count != local_minority_count)
-				majority_index = local_majority_index;
+			if (local_majority_count > local_minority_count)
+				majority_index = master_majority_index;
+			else if (local_majority_count < local_minority_count)
+				majority_index = master_minority_index;
+			else
+				majority_index = 0;
 		}
-		else {
+		else if (local_majority_count != local_minority_count) {
 			// make sure our local majority matches the all by 4 majority.
 			group temp_group;
 			temp_group.indexes[0] = master->indexes[0];
 			temp_group.indexes[1] = master->indexes[1];
 			temp_group.indexes[2] = master->indexes[2];
-			temp_group.indexes[3] = local_majority_index; 
-			if (QCOUNT(1, temp_group.indexes) == ONE_DIFFERENT) {
+			temp_group.indexes[3] = master_majority_index; 
+			int status = QCOUNT(1, temp_group.indexes);
+			if (status == ONE_DIFFERENT) {
 				// they don't match
 				majority += local_minority_count;
 				minority += local_majority_count;
 
 				if (majority < minority) {
 					// swap
-					majority_index = minority_index == -1 ? local_minority_index : minority_index;
-				}
-				else if (majority == minority)
-				{
+#ifdef DEBUG
+					printf("Majority is less than minority. Setting to master_minority_index\n");
+#endif
+					majority_index = minority_index == -1 ? master_majority_index : minority_index;
+				} else if (majority == minority) {
+#ifdef DEBUG
+					printf("Tie\n");
+#endif
 					majority_index = 0;
+				} else {
+#ifdef DEBUG
+					printf("Keeping majority index the same\n");
+#endif
 				}
+
+			} else if (majority + local_majority_count == minority + local_minority_count) {
+#ifdef DEBUG
+				printf("Tie!");
+#endif
+				majority_index = 0;
+			} else if (local_majority_count < local_minority_count && majority == minority) {
+#ifdef DEBUG
+			printf("Here!\n");
+#endif
 			}
+		} else if (majority == minority) {
+#ifdef DEBUG
+					printf("Tie\n");
+#endif
+			majority_index = 0;
 		}
-	} 
+	} else if (one_to_3_bin_size == 0 && majority == minority) {
+		majority_index = 0;
+	}
 
 #ifdef DEBUG
 	printf("Majority count = %d\nMinority count = %d\n", majority, minority);
