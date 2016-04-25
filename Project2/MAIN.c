@@ -1,19 +1,19 @@
 #include <stdio.h>
 #define MAXN 10000
 #include "QCOUNT.c"
-#include "mysubLinear.c"
+#include "mysub.c"
 
 main(){
 	int N[3] = {20,200,2000};
 	int n,ct,loop,round,answer,total,biggest;
 
-	for (round = 0; round<3; round++) {
+	for (round = 1; round<2; round++) {
 		total = 0;
 		biggest = -1;
 		for (loop=1; loop<=10000; loop++) {
 			n = N[round];
 			QCOUNT(0,n);
-			answer = mysub( n );
+			answer = mysub( n, loop );
 			if (answer<0) {
 				printf(" *** flagged error %d at round=%d, loop=%d\n",answer,round,loop);
 				return(0);

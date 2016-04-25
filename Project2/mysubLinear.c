@@ -58,7 +58,7 @@ int mysub (int n, int loop) {
 		}
 
 	}
-	group *master;
+	group *master, *slave;
 	// pick one group of 4 to be master group.
 	if (all_4_bin_size > 0) {
 		// ASSUME master is majority, may swap later.
@@ -76,6 +76,7 @@ int mysub (int n, int loop) {
 			else { 
 				minority += 4;
 				minority_index = all_4_bin[i]->indexes[0];
+				slave = all_4_bin[i];
 			}
 		}
 
@@ -84,8 +85,14 @@ int mysub (int n, int loop) {
 			int temp = minority;
 			minority = majority;
 			majority = temp;
+			temp = majority_index;
 			majority_index = minority_index;
-			minority_index = majority_index;
+			minority_index = temp;
+
+			// swap the master groups.
+			group *temp_group = master;
+			master = slave;
+			slave = temp_group;
 		} 
 	}
 
@@ -245,9 +252,8 @@ int mysub (int n, int loop) {
 #endif
 				majority_index = 0;
 			} else if (local_majority_count < local_minority_count && majority == minority) {
-#ifdef DEBUG
-			printf("Here!\n");
-#endif
+				// the local minority wins.
+				majority_index = master_minority_index;
 			}
 		} else if (majority == minority) {
 #ifdef DEBUG
