@@ -6,10 +6,10 @@ if test "$1" == "" ;then
 fi
 
 target="debug"
-if ["$2" == ""]; then
+if [ "$2" == "" ]; then
 	echo "Second argument is missing. Assuming debug build. If you wanted something else, please specify the makefile target"
 else
-	target="$2"
+	target=$2
 fi
 
 file=$1
@@ -22,4 +22,3 @@ if [ -f $file ]; then
 else
 	echo "File does not exist"
 fi
-# create symbolic link for the compiling file

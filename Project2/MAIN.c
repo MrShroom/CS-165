@@ -7,7 +7,7 @@ main(){
 	int N[3] = {20,200,2000};
 	int n,ct,loop,round,answer,total,biggest;
 
-	for (round = 1; round<2; round++) {
+	for (round = 0; round<3; round++) {
 		total = 0;
 		biggest = -1;
 		for (loop=1; loop<=10000; loop++) {

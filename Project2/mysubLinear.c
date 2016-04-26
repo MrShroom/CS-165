@@ -58,7 +58,7 @@ int mysub (int n, int loop) {
 		}
 
 	}
-	group *master, *slave;
+	group *master = NULL, *slave = NULL;
 	// pick one group of 4 to be master group.
 	if (all_4_bin_size > 0) {
 		// ASSUME master is majority, may swap later.
@@ -93,9 +93,15 @@ int mysub (int n, int loop) {
 			group *temp_group = master;
 			master = slave;
 			slave = temp_group;
+#ifdef DEBUG
+			printf("Swaping majority with minority");
+#endif
 		} 
 	}
-
+#ifdef DEBUG
+	if (slave != NULL && master != NULL)
+		printf("Master group=%d\tSlave group=%d\tMajority=%d\tMinority=%d\n", master->indexes[0], slave->indexes[0], majority, minority);
+#endif
 	if (majority <= n / 2 && one_to_3_bin_size > 0) {
 		int local_majority_count=0;
 		int local_minority_count=0;
@@ -236,9 +242,7 @@ int mysub (int n, int loop) {
 #endif
 					majority_index = minority_index == -1 ? master_majority_index : minority_index;
 				} else if (majority == minority) {
-#ifdef DEBUG
-					printf("Tie\n");
-#endif
+					// tie
 					majority_index = 0;
 				} else {
 #ifdef DEBUG
@@ -247,18 +251,17 @@ int mysub (int n, int loop) {
 				}
 
 			} else if (majority + local_majority_count == minority + local_minority_count) {
-#ifdef DEBUG
-				printf("Tie!");
-#endif
+				// tie
 				majority_index = 0;
 			} else if (local_majority_count < local_minority_count && majority == minority) {
 				// the local minority wins.
 				majority_index = master_minority_index;
+			} else if (minority + local_minority_count > majority + local_majority_count) {
+				// majorities do match, BUT the sums are not even, and the local majority 
+				majority_index = master_minority_index;
 			}
 		} else if (majority == minority) {
-#ifdef DEBUG
-					printf("Tie\n");
-#endif
+			// tie
 			majority_index = 0;
 		}
 	} else if (one_to_3_bin_size == 0 && majority == minority) {
