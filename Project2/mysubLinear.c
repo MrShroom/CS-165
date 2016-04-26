@@ -10,11 +10,20 @@ typedef struct group_t {
 } group;
 
 void setgroup(group* thegroup, int start) {
-	thegroup->indexes[0] = start;
-	thegroup->indexes[1] = start + 1;
-	thegroup->indexes[2] = start + 2;
-	thegroup->indexes[3] = start + 3;
-	thegroup->status = QCOUNT(1, thegroup->indexes);
+    thegroup->indexes[0] = start;
+    thegroup->indexes[1] = start + 1;
+    thegroup->indexes[2] = start + 2;
+    thegroup->indexes[3] = start + 3;
+    thegroup->status = QCOUNT(1, thegroup->indexes);
+}
+
+group makegroup(int a, int b, int c, int d) {
+	group thegroup;
+	thegroup.indexes[0] = a;
+	thegroup.indexes[1] = b;
+	thegroup.indexes[2] = c;
+	thegroup.indexes[3] = d;
+	return thegroup;
 }
 
 int mysub (int n) {
@@ -54,11 +63,8 @@ int mysub (int n) {
 		majority_index = master->indexes[0];
 		majority = 4;
 		for (i = 1; i < all_4_bin_size; i++) {
-			group temp_group;
-			temp_group.indexes[0] = master->indexes[0];
-			temp_group.indexes[1] = master->indexes[1];
-			temp_group.indexes[2] = master->indexes[2];
-			temp_group.indexes[3] = all_4_bin[i]->indexes[0]; // index doesn't matter here.
+			group temp_group = makegroup(master->indexes[0], master->indexes[1], master->indexes[2], 
+				all_4_bin[i]->indexes[0]);
 			int status = QCOUNT(1, temp_group.indexes);
 			if (status == ALL_SAME) majority += 4;
 			else { 
@@ -99,10 +105,8 @@ int mysub (int n) {
 			int j;
 			if (local_majority_index < 0) {
 				for (j = 0; j < GROUP_SIZE; j++) {
-					temp_group.indexes[0] = one_to_3_bin[i]->indexes[0];
-					temp_group.indexes[1] = one_to_3_bin[i]->indexes[1];
-					temp_group.indexes[2] = one_to_3_bin[i]->indexes[2];
-					temp_group.indexes[3] = one_to_3_bin[i]->indexes[3];
+					temp_group = makegroup(one_to_3_bin[i]->indexes[0], one_to_3_bin[i]->indexes[1],
+						one_to_3_bin[i]->indexes[2], one_to_3_bin[i]->indexes[3]);
 					temp_group.indexes[j] = offset;
 					int status = QCOUNT(1, temp_group.indexes);
 
@@ -125,19 +129,17 @@ int mysub (int n) {
 			} else {
 				int a = 1;
 				for (j = 0; j < GROUP_SIZE; j++) {
-					group temp_group2;
-					temp_group.indexes[0] = one_to_3_bin[i]->indexes[0];
-					temp_group.indexes[1] = one_to_3_bin[i]->indexes[1];
-					temp_group.indexes[2] = one_to_3_bin[i]->indexes[2];
-					temp_group.indexes[3] = one_to_3_bin[i]->indexes[3];
+					temp_group = makegroup(one_to_3_bin[i]->indexes[0], one_to_3_bin[i]->indexes[1],
+						one_to_3_bin[i]->indexes[2], one_to_3_bin[i]->indexes[3]);
+					group temp_group2 = makegroup(one_to_3_bin[master_group_index]->indexes[0], 
+						one_to_3_bin[master_group_index]->indexes[1], one_to_3_bin[master_group_index]->indexes[2], 
+						one_to_3_bin[master_group_index]->indexes[3]);
+
+					// cell replacement
 					temp_group.indexes[j] = offset;
-					int status = QCOUNT(1, temp_group.indexes);
-					temp_group2.indexes[0] = one_to_3_bin[master_group_index]->indexes[0];
-					temp_group2.indexes[1] = one_to_3_bin[master_group_index]->indexes[1];
-					temp_group2.indexes[2] = one_to_3_bin[master_group_index]->indexes[2];
-					temp_group2.indexes[3] = one_to_3_bin[master_group_index]->indexes[3];
 					temp_group2.indexes[master_group_index_of_index_array] = one_to_3_bin[i]->indexes[j];
 
+					int status = QCOUNT(1, temp_group.indexes);
 					if(status == EVEN_DIVIDE )
 					{
 						status = QCOUNT(1, temp_group2.indexes);
@@ -183,11 +185,8 @@ int mysub (int n) {
 		}
 		else if (local_majority_count != local_minority_count) {
 			// make sure our local majority matches the all by 4 majority.
-			group temp_group;
-			temp_group.indexes[0] = master->indexes[0];
-			temp_group.indexes[1] = master->indexes[1];
-			temp_group.indexes[2] = master->indexes[2];
-			temp_group.indexes[3] = master_majority_index; 
+			group temp_group = makegroup(master->indexes[0], master->indexes[1], master->indexes[2],
+				master_majority_index);
 			int status = QCOUNT(1, temp_group.indexes);
 			if (status == ONE_DIFFERENT) {
 				// they don't match
