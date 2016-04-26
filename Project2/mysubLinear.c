@@ -17,10 +17,7 @@ void setgroup(group* thegroup, int start) {
 	thegroup->status = QCOUNT(1, thegroup->indexes);
 }
 
-int mysub (int n, int loop) {
-#ifdef DEBUG
-	QCOUNT(-1);
-#endif
+int mysub (int n) {
 	int majority = 0; // will eventually be >= n / 2 
 	int minority = 0;
 	int majority_index = 0;
@@ -37,23 +34,14 @@ int mysub (int n, int loop) {
 		setgroup(temp, i);
 		if(temp->status == EVEN_DIVIDE)
 		{
-#ifdef DEBUG
-			printf("Setting %i to EVEN_DIVIDE\n", i);
-#endif
 			free(temp);
 		}
 		else if(temp->status == ALL_SAME)
 		{
-#ifdef DEBUG
-			printf("Setting %i to ALL_SAME\n", i);
-#endif
 			all_4_bin[all_4_bin_size++] = temp;
 		}
 		else if(temp->status == ONE_DIFFERENT)
 		{
-#ifdef DEBUG
-			printf("Setting %i to ONE_DIFFERENT\n", i);
-#endif
 			one_to_3_bin[one_to_3_bin_size++] = temp;
 		}
 
@@ -93,15 +81,8 @@ int mysub (int n, int loop) {
 			group *temp_group = master;
 			master = slave;
 			slave = temp_group;
-#ifdef DEBUG
-			printf("Swaping majority with minority");
-#endif
 		} 
 	}
-#ifdef DEBUG
-	if (slave != NULL && master != NULL)
-		printf("Master group=%d\tSlave group=%d\tMajority=%d\tMinority=%d\n", master->indexes[0], slave->indexes[0], majority, minority);
-#endif
 	if (majority <= n / 2 && one_to_3_bin_size > 0) {
 		int local_majority_count=0;
 		int local_minority_count=0;
@@ -138,9 +119,6 @@ int mysub (int n, int loop) {
 						}
 						local_majority_count += 3;
 						local_minority_count += 1;
-#ifdef DEBUG
-							printf("1.) i=%d\tlocal_majority_index=%d\tlocal_minority_index=%d\n", i, local_majority_index, local_minority_index);
-#endif
 						break;
 					}
 				}
@@ -168,15 +146,9 @@ int mysub (int n, int loop) {
 						if(status == EVEN_DIVIDE) {
 							local_majority_count += 1;
 							local_minority_count += 3;
-#ifdef DEBUG
-							printf("2.1.) Mostly minority i=%d\tlocal_majority_index=%d\tlocal_minority_index=%d\n", i, local_majority_index, local_minority_index);
-#endif
 						} else {
 							local_majority_count += 3;
 							local_minority_count += 1;
-#ifdef DEBUG
-							printf("2.2.) Mostly majority i=%d\t(status=%d\toffset=%d)\tlocal_majority_index=%d\tlocal_minority_index=%d\n", i, status, offset, local_majority_index, local_minority_index);
-#endif
 						}
 						break;
 					}
@@ -190,28 +162,15 @@ int mysub (int n, int loop) {
 						if(status == EVEN_DIVIDE) {
 							local_majority_count += 1;
 							local_minority_count += 3;
-#ifdef DEBUG
-							printf("3.1.) Mostly minority i=%d\tstatus=%d\tlocal_majority_index=%d\tlocal_minority_index=%d\n", i, status, local_majority_index, local_minority_index);
-#endif
 						} else {
 							local_majority_count += 3;
 							local_minority_count += 1;
-#ifdef DEBUG
-							printf("3.2.) Mostly majority i=%d\t(status=%d\toffset=%d)\tlocal_majority_index=%d\tlocal_minority_index=%d\n", i, status, offset, local_majority_index, local_minority_index);
-#endif
 						}
 						break;
 					}
 				}
 			}
 		}
-
-#ifdef DEBUG
-		printf("Local majority count = %d\tLocal minority count = %d\n", local_majority_count, local_minority_count);
-		if (local_majority_count == local_minority_count) {
-			printf("Local counts are the same\n");
-		}
-#endif
 
 		if (all_4_bin_size == 0) 
 		{
@@ -237,19 +196,11 @@ int mysub (int n, int loop) {
 
 				if (majority < minority) {
 					// swap
-#ifdef DEBUG
-					printf("Majority is less than minority. Setting to master_minority_index\n");
-#endif
 					majority_index = minority_index == -1 ? master_majority_index : minority_index;
 				} else if (majority == minority) {
 					// tie
 					majority_index = 0;
-				} else {
-#ifdef DEBUG
-					printf("Keeping majority index the same\n");
-#endif
-				}
-
+				} 
 			} else if (majority + local_majority_count == minority + local_minority_count) {
 				// tie
 				majority_index = 0;
@@ -267,17 +218,5 @@ int mysub (int n, int loop) {
 	} else if (one_to_3_bin_size == 0 && majority == minority) {
 		majority_index = 0;
 	}
-
-#ifdef DEBUG
-	printf("Majority count = %d\nMinority count = %d\n", majority, minority);
-	printf("Returning %d\n", majority_index);
-#endif // DEBUG
-
 	return majority_index;
 }
-
-
-
-
-
-

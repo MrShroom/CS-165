@@ -120,12 +120,12 @@ double dshrandom( long input ) {
 /*		by Stephen Park and Keith Miller		*/
 /*		CACM 31 (Oct 1988) 1192-1201.			*/
 /*  *  *  *  *  *  *  *  *  *  *  *  *  *  *  *  *  *  *  *  *  */
-	// static long seed = 3125;
-	static long seed = 0;
-	if (seed == 0)
+	static long seed = 3125;
+	// static long seed = 0;
+	/*if (seed == 0)
 	{
 		seed = time(0);
-	}
+	} */
 	static long a = 16807;
 	static long m = 2147483647;
 	static long q = 127773;      /* m div a */
