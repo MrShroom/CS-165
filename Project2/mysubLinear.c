@@ -26,7 +26,34 @@ group makegroup(int a, int b, int c, int d) {
 	return thegroup;
 }
 
+int doleftovers(int majority_index, int n) {
+	group g;
+	setgroup(&g, majority_index);
+	int i, next, remain = n % GROUP_SIZE, diff=0;
+	for (next = 0; next < remain; next++) {
+		for (i = 0; i < GROUP_SIZE; i++) {
+			int status, temp = g.indexes[i];
+			g.indexes[i] = next + (n - (n % GROUP_SIZE)) + 1;
+			status = QCOUNT(1, g.indexes);
+			g.indexes[i] = temp;
+
+			if (status == g.status) continue;
+			if (status != EVEN_DIVIDE) {
+				// we can count this item
+				// towards whatever bin.
+				if (status == ALL_SAME)
+					diff += 1;
+				else if (status == ONE_DIFFERENT)
+					diff -= 1;
+				break;
+			}
+		}
+	}
+	return diff;
+}
+
 int mysub (int n) {
+	QCOUNT(-1);
 	int majority = 0; // will eventually be >= n / 2 
 	int minority = 0;
 	int majority_index = 0;
@@ -38,7 +65,7 @@ int mysub (int n) {
 
 	// loop over 0 to n - 4
 	int i;
-	for (i = 1; i <= n; i += GROUP_SIZE) {
+	for (i = 1; i <= n - (n - GROUP_SIZE); i += GROUP_SIZE) {
 		group *temp = (group*)malloc(sizeof(group));
 		setgroup(temp, i);
 		if(temp->status == EVEN_DIVIDE)
@@ -216,6 +243,20 @@ int mysub (int n) {
 		}
 	} else if (one_to_3_bin_size == 0 && majority == minority) {
 		majority_index = 0;
+	}
+
+	// handle when n is not divisible by 4
+	if (n % GROUP_SIZE) {
+		int index = majority_index;
+		if (majority_index == 0) {
+			index = (n - (n % GROUP_SIZE) - GROUP_SIZE) + 1;
+		}
+		status = doleftovers(index, n);
+		if (status < 0) {
+
+		} else if (status > 0) {
+			
+		}
 	}
 	return majority_index;
 }
