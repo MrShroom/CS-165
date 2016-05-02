@@ -9,6 +9,12 @@ typedef struct group_t {
 	int status;
 } group;
 
+typedef struct group_evener_t {
+	int status;
+	int majority;
+	int minority;
+} group_evener;
+
 void setgroup(group* thegroup, int start) {
     thegroup->indexes[0] = start;
     thegroup->indexes[1] = start + 1;
@@ -26,9 +32,11 @@ group makegroup(int a, int b, int c, int d) {
 	return thegroup;
 }
 
-int doleftovers(int majority_index, int n) {
+group_evener doleftovers(int majority_index, int n) {
 	group g;
+	group_evener evener;
 	setgroup(&g, majority_index);
+	printf("1=%d\t2=%d\t3=%d\t4=%d\n", g.indexes[0], g.indexes[1], g.indexes[2], g.indexes[3]);
 	int i, next, remain = n % GROUP_SIZE, diff=0;
 	for (next = 0; next < remain; next++) {
 		for (i = 0; i < GROUP_SIZE; i++) {
@@ -37,22 +45,39 @@ int doleftovers(int majority_index, int n) {
 			status = QCOUNT(1, g.indexes);
 			g.indexes[i] = temp;
 
-			if (status == g.status) continue;
-			if (status != EVEN_DIVIDE) {
+			if (status == g.status) {
+				if (status == ALL_SAME) {
+					// awesome. That was easy.
+					evener.majority = g.indexes[i];
+					evener.minority = -1;
+					diff += 1;
+					break;
+				} else {
+					// we need a real difference.
+					continue;
+				}
+			} else {
 				// we can count this item
 				// towards whatever bin.
-				if (status == ALL_SAME)
+				if (status == ALL_SAME || (status == ONE_DIFFERENT && g.status == EVEN_DIVIDE)) {
 					diff += 1;
-				else if (status == ONE_DIFFERENT)
+					evener.majority = next + (n - (n % GROUP_SIZE)) + 1;
+					evener.minority = g.indexes[i];
+				} else if (status == ONE_DIFFERENT || (status == EVEN_DIVIDE && g.status == ONE_DIFFERENT)) {
 					diff -= 1;
+					evener.minority = next + (n - (n % GROUP_SIZE)) + 1;
+					evener.majority = g.indexes[i];
+				}
 				break;
 			}
 		}
 	}
-	return diff;
+	evener.status = diff;
+	printf("status=%d\tmajority=%d\tminority=%d\n", diff, evener.majority, evener.minority);
+	return evener;
 }
 
-int mysub (int n) {
+int mysub (int n, int loop) {
 	QCOUNT(-1);
 	int majority = 0; // will eventually be >= n / 2 
 	int minority = 0;
@@ -65,7 +90,7 @@ int mysub (int n) {
 
 	// loop over 0 to n - 4
 	int i;
-	for (i = 1; i <= n - (n - GROUP_SIZE); i += GROUP_SIZE) {
+	for (i = 1; i <= n - (n % GROUP_SIZE); i += GROUP_SIZE) {
 		group *temp = (group*)malloc(sizeof(group));
 		setgroup(temp, i);
 		if(temp->status == EVEN_DIVIDE)
@@ -127,7 +152,7 @@ int mysub (int n) {
 		int master_minority_index = 0;
 		for (i = 0; i < one_to_3_bin_size; i++) 
 		{
-			int offset = (one_to_3_bin[i]->indexes[3]+1) % n;
+			int offset = (one_to_3_bin[i]->indexes[3]+1) % (n - (n % GROUP_SIZE));
 			group temp_group;
 			int j;
 			if (local_majority_index < 0) {
@@ -248,14 +273,22 @@ int mysub (int n) {
 	// handle when n is not divisible by 4
 	if (n % GROUP_SIZE) {
 		int index = majority_index;
+		group_evener status;
 		if (majority_index == 0) {
 			index = (n - (n % GROUP_SIZE) - GROUP_SIZE) + 1;
 		}
+		printf("Index(before mutation)=%d\t", index);
+		// bring index to power of fourd
+		index -= (index - 1) % GROUP_SIZE;
 		status = doleftovers(index, n);
-		if (status < 0) {
-
-		} else if (status > 0) {
-			
+		if (status.status < 0) {
+			if (majority_index == 0) {
+				majority_index = status.minority;
+			}
+		} else if (status.status > 0) {
+			if (majority_index == 0) {
+				majority_index = status.majority;
+			}
 		}
 	}
 	return majority_index;
