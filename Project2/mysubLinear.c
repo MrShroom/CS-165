@@ -5,14 +5,14 @@
 #define EVEN_DIVIDE    0
 #define GROUP_SIZE     4
 typedef struct group_t {
-	int indexes[GROUP_SIZE];
-	int status;
+    int indexes[GROUP_SIZE];
+    int status;
 } group;
 
 typedef struct group_evener_t {
-	int status;
-	int majority;
-	int minority;
+    int status;
+    int majority;
+    int minority;
 } group_evener;
 
 void setgroup(group* thegroup, int start) {
@@ -24,272 +24,325 @@ void setgroup(group* thegroup, int start) {
 }
 
 group makegroup(int a, int b, int c, int d) {
-	group thegroup;
-	thegroup.indexes[0] = a;
-	thegroup.indexes[1] = b;
-	thegroup.indexes[2] = c;
-	thegroup.indexes[3] = d;
-	return thegroup;
+    group thegroup;
+    thegroup.indexes[0] = a;
+    thegroup.indexes[1] = b;
+    thegroup.indexes[2] = c;
+    thegroup.indexes[3] = d;
+    return thegroup;
 }
 
 group_evener doleftovers(int majority_index, int n) {
-	group g;
-	group_evener evener;
-	setgroup(&g, majority_index);
-	printf("1=%d\t2=%d\t3=%d\t4=%d\n", g.indexes[0], g.indexes[1], g.indexes[2], g.indexes[3]);
-	int i, next, remain = n % GROUP_SIZE, diff=0;
-	for (next = 0; next < remain; next++) {
-		for (i = 0; i < GROUP_SIZE; i++) {
-			int status, temp = g.indexes[i];
-			g.indexes[i] = next + (n - (n % GROUP_SIZE)) + 1;
-			status = QCOUNT(1, g.indexes);
-			g.indexes[i] = temp;
+    group g;
+    group_evener evener;
+    setgroup(&g, majority_index);
+    printf("1=%d\t2=%d\t3=%d\t4=%d\n", g.indexes[0], g.indexes[1], g.indexes[2], g.indexes[3]);
+    int i, next, remain = n % GROUP_SIZE, diff = 0;
+    for (next = 0; next < remain; next++) {
+        for (i = 0; i < GROUP_SIZE; i++) {
+            int status, temp = g.indexes[i];
+            g.indexes[i] = next + (n - (n % GROUP_SIZE)) + 1;
+            status = QCOUNT(1, g.indexes); //Marking QCOUNT's 
+            g.indexes[i] = temp;
 
-			if (status == g.status) {
-				if (status == ALL_SAME) {
-					// awesome. That was easy.
-					evener.majority = g.indexes[i];
-					evener.minority = -1;
-					diff += 1;
-					break;
-				} else {
-					// we need a real difference.
-					continue;
-				}
-			} else {
-				// we can count this item
-				// towards whatever bin.
-				if (status == ALL_SAME || (status == ONE_DIFFERENT && g.status == EVEN_DIVIDE)) {
-					diff += 1;
-					evener.majority = next + (n - (n % GROUP_SIZE)) + 1;
-					evener.minority = g.indexes[i];
-				} else if (status == ONE_DIFFERENT || (status == EVEN_DIVIDE && g.status == ONE_DIFFERENT)) {
-					diff -= 1;
-					evener.minority = next + (n - (n % GROUP_SIZE)) + 1;
-					evener.majority = g.indexes[i];
-				}
-				break;
-			}
-		}
-	}
-	evener.status = diff;
-	printf("status=%d\tmajority=%d\tminority=%d\n", diff, evener.majority, evener.minority);
-	return evener;
+            if (status == g.status) {
+                if (status == ALL_SAME) {
+                    // awesome. That was easy.
+                    evener.majority = g.indexes[i];
+                    evener.minority = -1;
+                    diff += 1;
+                    break;
+                }
+                else {
+                    // we need a real difference.
+                    continue;
+                }
+            }
+            else {
+                // we can count this item
+                // towards whatever bin.
+                if (status == ALL_SAME || (status == ONE_DIFFERENT && g.status == EVEN_DIVIDE)) {
+                    diff += 1;
+                    evener.majority = next + (n - (n % GROUP_SIZE)) + 1;
+                    evener.minority = g.indexes[i];
+                }
+                else if (status == ONE_DIFFERENT || (status == EVEN_DIVIDE && g.status == ONE_DIFFERENT)) {
+                    diff -= 1;
+                    evener.minority = next + (n - (n % GROUP_SIZE)) + 1;
+                    evener.majority = g.indexes[i];
+                }
+                break;
+            }
+        }
+    }
+    evener.status = diff;
+    printf("status=%d\tmajority=%d\tminority=%d\n", diff, evener.majority, evener.minority);
+    return evener;
 }
 
-int mysub (int n, int loop) {
-	QCOUNT(-1);
-	int majority = 0; // will eventually be >= n / 2 
-	int minority = 0;
-	int majority_index = 0;
-	int minority_index = -1;
-	group **all_4_bin = (group**)malloc(sizeof(group*) * ((n + GROUP_SIZE)/GROUP_SIZE));
-	int all_4_bin_size =0;
-	group **one_to_3_bin = (group**)malloc(sizeof(group*) * ((n + GROUP_SIZE)/GROUP_SIZE));
-	int one_to_3_bin_size =0;
 
-	// loop over 0 to n - 4
-	int i;
-	for (i = 1; i <= n - (n % GROUP_SIZE); i += GROUP_SIZE) {
-		group *temp = (group*)malloc(sizeof(group));
-		setgroup(temp, i);
-		if(temp->status == EVEN_DIVIDE)
-		{
-			free(temp);
-		}
-		else if(temp->status == ALL_SAME)
-		{
-			all_4_bin[all_4_bin_size++] = temp;
-		}
-		else if(temp->status == ONE_DIFFERENT)
-		{
-			one_to_3_bin[one_to_3_bin_size++] = temp;
-		}
+int mysub(int n, int loop) {
+    //QCOUNT(-1);
+    int majority = 0; // will eventually be >= n / 2 
+    int minority = 0; //keep track in case we need to swap.
+    int majority_index = 0;
+    int minority_index = -1;
+    int seen_a_all_4 = 0;
+    int seen_a_3_to_1 = 0;
 
-	}
-	group *master = NULL, *slave = NULL;
-	// pick one group of 4 to be master group.
-	if (all_4_bin_size > 0) {
-		// ASSUME master is majority, may swap later.
-		master = all_4_bin[0];
-		majority_index = master->indexes[0];
-		majority = 4;
-		for (i = 1; i < all_4_bin_size; i++) {
-			group temp_group = makegroup(master->indexes[0], master->indexes[1], master->indexes[2], 
-				all_4_bin[i]->indexes[0]);
-			int status = QCOUNT(1, temp_group.indexes);
-			if (status == ALL_SAME) majority += 4;
-			else { 
-				minority += 4;
-				minority_index = all_4_bin[i]->indexes[0];
-				slave = all_4_bin[i];
-			}
-		}
+    // master group is the group that we compare others to check if they are in the majority
+    // slave group is the group that we compare others to check if they are in the minority
+    group *master = NULL, *slave = NULL;
+    group *master_3_to_1 = NULL, *slave_3_to_1 = NULL;
 
-		if (minority > majority) {
-			// swap
-			int temp = minority;
-			minority = majority;
-			majority = temp;
-			temp = majority_index;
-			majority_index = minority_index;
-			minority_index = temp;
+    int local_majority_count = 0;
+    int local_minority_count = 0;
+    int local_majority_index = -2;//unknown yet
+    int local_minority_index = -1;
+    int master_group_index_of_index_array = -1;
+    int master_majority_index = 0;
+    int master_minority_index = 0;
 
-			// swap the master groups.
-			group *temp_group = master;
-			master = slave;
-			slave = temp_group;
-		} 
-	}
-	if (majority <= n / 2 && one_to_3_bin_size > 0) {
-		int local_majority_count=0;
-		int local_minority_count=0;
-		int local_majority_index =-2;//unknown yet
-		int local_minority_index = -1;
-		int master_group_index = -1;
-		int master_group_index_of_index_array = -1;
-		int master_majority_index = 0;
-		int master_minority_index = 0;
-		for (i = 0; i < one_to_3_bin_size; i++) 
-		{
-			int offset = (one_to_3_bin[i]->indexes[3]+1) % (n - (n % GROUP_SIZE));
-			group temp_group;
-			int j;
-			if (local_majority_index < 0) {
-				for (j = 0; j < GROUP_SIZE; j++) {
-					temp_group = makegroup(one_to_3_bin[i]->indexes[0], one_to_3_bin[i]->indexes[1],
-						one_to_3_bin[i]->indexes[2], one_to_3_bin[i]->indexes[3]);
-					temp_group.indexes[j] = offset;
-					int status = QCOUNT(1, temp_group.indexes);
+    // loop over 0 to n - 4
+    int i;
+    for (i = 1; i <= n - (n % GROUP_SIZE); i += GROUP_SIZE)
+    {
+        group *temp = (group*)malloc(sizeof(group));
+        setgroup(temp, i);// one hidden QCOUNT in set Group
+        if (temp->status == EVEN_DIVIDE)
+        {
+            free(temp);
+            majority += 2;
+            minority += 2;
 
-					if (status != ONE_DIFFERENT) {
-						master_group_index = i;
-						if (status == EVEN_DIVIDE) {
-							master_majority_index = local_majority_index = one_to_3_bin[i]->indexes[j];
-							master_minority_index = local_minority_index = offset;
-							master_group_index_of_index_array = j;
-						} else {
-							master_majority_index = local_majority_index = one_to_3_bin[i]->indexes[(j+1) % GROUP_SIZE];
-							master_minority_index = local_minority_index = one_to_3_bin[i]->indexes[j];
-							master_group_index_of_index_array = (j+1) % GROUP_SIZE;
-						}
-						local_majority_count += 3;
-						local_minority_count += 1;
-						break;
-					}
-				}
-			} else {
-				int a = 1;
-				for (j = 0; j < GROUP_SIZE; j++) {
-					temp_group = makegroup(one_to_3_bin[i]->indexes[0], one_to_3_bin[i]->indexes[1],
-						one_to_3_bin[i]->indexes[2], one_to_3_bin[i]->indexes[3]);
-					group temp_group2 = makegroup(one_to_3_bin[master_group_index]->indexes[0], 
-						one_to_3_bin[master_group_index]->indexes[1], one_to_3_bin[master_group_index]->indexes[2], 
-						one_to_3_bin[master_group_index]->indexes[3]);
+        }
+        else if (temp->status == ALL_SAME)
+        {
+            seen_a_all_4 = 1;
+            if (master == NULL) {
+                // ASSUME master is majority, may swap later.
+                master = temp;
+                majority_index = master->indexes[0];
+                majority += 4;
+            }
+            else
+            {
+                group temp_group = makegroup(master->indexes[0], master->indexes[1], master->indexes[2],
+                    temp->indexes[0]);
+                int status = QCOUNT(1, temp_group.indexes); //Marking QCOUNT's 
+                if (status == ALL_SAME)
+                {
+                    majority += 4;
+                }
+                else
+                {
+                    minority += 4;
+                    minority_index = temp->indexes[0];
+                    slave = temp;
+                }
 
-					// cell replacement
-					temp_group.indexes[j] = offset;
-					temp_group2.indexes[master_group_index_of_index_array] = one_to_3_bin[i]->indexes[j];
+            }
+            if (minority > majority) {
+                // swap
+                int temp = minority;
+                minority = majority;
+                majority = temp;
+                temp = majority_index;
+                majority_index = minority_index;
+                minority_index = temp;
 
-					int status = QCOUNT(1, temp_group.indexes);
-					if(status == EVEN_DIVIDE )
-					{
-						status = QCOUNT(1, temp_group2.indexes);
-						local_majority_index = one_to_3_bin[i]->indexes[j]; // always true.
-						local_minority_index = offset;
-						if(status == EVEN_DIVIDE) {
-							local_majority_count += 1;
-							local_minority_count += 3;
-						} else {
-							local_majority_count += 3;
-							local_minority_count += 1;
-						}
-						break;
-					}
-					else if(status == ALL_SAME)
-					{
-						local_minority_index = one_to_3_bin[i]->indexes[j];
-						local_majority_index = one_to_3_bin[i]->indexes[(j + 1) % GROUP_SIZE];
-						temp_group2.indexes[master_group_index_of_index_array] = local_majority_index;
-						// does it match the majority.
-						status = QCOUNT(1, temp_group2.indexes);
-						if(status == EVEN_DIVIDE) {
-							local_majority_count += 1;
-							local_minority_count += 3;
-						} else {
-							local_majority_count += 3;
-							local_minority_count += 1;
-						}
-						break;
-					}
-				}
-			}
-		}
+                // swap the master groups.
+                group *temp_group = master;
+                master = slave;
+                slave = temp_group;
+            }
+            
+        }
+        else if (temp->status == ONE_DIFFERENT) // This is the only place to reduce number of Qcounts
+        {
+            seen_a_3_to_1 = 1;
+            int offset = (temp->indexes[3] + 1) % (n - (n % GROUP_SIZE));//next index in arrayafter end of bin
+            group temp_group;
+            int j;
+            if (local_majority_index < 0) 
+            {
+                for (j = 0; j < GROUP_SIZE; j++) {
+                    temp_group = makegroup(temp->indexes[0], temp->indexes[1],
+                        temp->indexes[2], temp->indexes[3]);
+                    temp_group.indexes[j] = offset;
+                    int status = QCOUNT(1, temp_group.indexes);//Marking QCOUNT's 
 
-		if (all_4_bin_size == 0) 
-		{
-			if (local_majority_count > local_minority_count)
-				majority_index = master_majority_index;
-			else if (local_majority_count < local_minority_count)
-				majority_index = master_minority_index;
-			else
-				majority_index = 0;
-		}
-		else if (local_majority_count != local_minority_count) {
-			// make sure our local majority matches the all by 4 majority.
-			group temp_group = makegroup(master->indexes[0], master->indexes[1], master->indexes[2],
-				master_majority_index);
-			int status = QCOUNT(1, temp_group.indexes);
-			if (status == ONE_DIFFERENT) {
-				// they don't match
-				majority += local_minority_count;
-				minority += local_majority_count;
+                    if (status != ONE_DIFFERENT) {
+                        master_3_to_1 = temp;
+                        if (status == EVEN_DIVIDE) {
+                            master_majority_index = local_majority_index = temp->indexes[j];
+                            master_minority_index = local_minority_index = offset;
+                            master_group_index_of_index_array = j;
+                        }
+                        else {
+                            master_majority_index = local_majority_index = temp->indexes[(j + 1) % GROUP_SIZE];
+                            master_minority_index = local_minority_index = temp->indexes[j];
+                            master_group_index_of_index_array = (j + 1) % GROUP_SIZE;
+                        }
+                        local_majority_count += 3;
+                        local_minority_count += 1;
+                        break;
+                    }
+                }
+            }
+            else {
+                int a = 1;
+                for (j = 0; j < GROUP_SIZE; j++) {
+                    temp_group = makegroup(temp->indexes[0], temp->indexes[1],
+                        temp->indexes[2], temp->indexes[3]);
+                    group temp_group2 = makegroup(master_3_to_1->indexes[0],
+                        master_3_to_1->indexes[1], master_3_to_1->indexes[2],
+                        master_3_to_1->indexes[3]);
 
-				if (majority < minority) {
-					// swap
-					majority_index = minority_index == -1 ? master_majority_index : minority_index;
-				} else if (majority == minority) {
-					// tie
-					majority_index = 0;
-				} 
-			} else if (majority + local_majority_count == minority + local_minority_count) {
-				// tie
-				majority_index = 0;
-			} else if (local_majority_count < local_minority_count && majority == minority) {
-				// the local minority wins.
-				majority_index = master_minority_index;
-			} else if (minority + local_minority_count > majority + local_majority_count) {
-				// majorities do match, BUT the sums are not even, and the local majority 
-				majority_index = master_minority_index;
-			}
-		} else if (majority == minority) {
-			// tie
-			majority_index = 0;
-		}
-	} else if (one_to_3_bin_size == 0 && majority == minority) {
-		majority_index = 0;
-	}
+                    // cell replacement
+                    temp_group.indexes[j] = offset;
+                    temp_group2.indexes[master_group_index_of_index_array] = temp->indexes[j];
 
-	// handle when n is not divisible by 4
-	if (n % GROUP_SIZE) {
-		int index = majority_index;
-		group_evener status;
-		if (majority_index == 0) {
-			index = (n - (n % GROUP_SIZE) - GROUP_SIZE) + 1;
-		}
-		printf("Index(before mutation)=%d\t", index);
-		// bring index to power of fourd
-		index -= (index - 1) % GROUP_SIZE;
-		status = doleftovers(index, n);
-		if (status.status < 0) {
-			if (majority_index == 0) {
-				majority_index = status.minority;
-			}
-		} else if (status.status > 0) {
-			if (majority_index == 0) {
-				majority_index = status.majority;
-			}
-		}
-	}
-	return majority_index;
+                    int status = QCOUNT(1, temp_group.indexes);//Marking QCOUNT's 
+                    if (status == EVEN_DIVIDE)
+                    {
+                        status = QCOUNT(1, temp_group2.indexes); //Marking QCOUNT's 
+                        local_majority_index = temp->indexes[j]; // always true.
+                        local_minority_index = offset;
+                        if (status == EVEN_DIVIDE) {
+                            local_majority_count += 1;
+                            local_minority_count += 3;
+                        }
+                        else {
+                            local_majority_count += 3;
+                            local_minority_count += 1;
+                        }
+                                                
+                        break;
+                    }
+                    else if (status == ALL_SAME)
+                    {
+                        local_minority_index = temp->indexes[j];
+                        local_majority_index = temp->indexes[(j + 1) % GROUP_SIZE];
+                        temp_group2.indexes[master_group_index_of_index_array] = local_majority_index;
+                        // does it match the majority.
+                        status = QCOUNT(1, temp_group2.indexes);//Marking QCOUNT's 
+                        if (status == EVEN_DIVIDE) {
+                            local_majority_count += 1;
+                            local_minority_count += 3;
+                        }
+                        else {
+                            local_majority_count += 3;
+                            local_minority_count += 1;
+                        }
+                        break;
+                    }
+                }
+            }
+            if (local_majority_count > (n / 2))// early stopping
+            {
+                free(temp);
+                return master_majority_index;
+            }
+        }
+        if (majority > (n / 2))// early stopping
+        {
+            return majority_index;
+        }
+    }
+
+    if (seen_a_3_to_1) {
+        if (!seen_a_all_4)
+        {
+            if (local_majority_count > local_minority_count)
+            {
+                majority += local_majority_count;
+                minority += local_minority_count;
+                majority_index = master_majority_index;
+            }
+            else if (local_majority_count < local_minority_count)
+            {
+                majority += local_minority_count;
+                minority += local_majority_count;
+                majority_index = master_minority_index;
+            }
+            else
+            {
+                majority += local_minority_count;
+                minority += local_majority_count;
+                majority_index = 0;
+            }
+        }
+        else if (local_majority_count != local_minority_count) {
+            // make sure our local majority matches the all by 4 majority.
+            group temp_group = makegroup(master->indexes[0], master->indexes[1], master->indexes[2],
+                master_majority_index);
+            int status = QCOUNT(1, temp_group.indexes);//Marking QCOUNT's 
+            if (status == ONE_DIFFERENT) {
+                // they don't match
+                majority += local_minority_count;
+                minority += local_majority_count;
+
+                if (majority < minority) {
+                    // swap         
+                    majority_index = minority_index == -1 ? master_majority_index : minority_index;
+                }
+                else if (majority == minority) {
+                    // tie
+                    majority_index = 0;
+                }
+            }
+            else if (majority + local_majority_count == minority + local_minority_count) {
+                // tie
+                majority += local_majority_count;
+                minority += local_minority_count;
+                majority_index = 0;
+            }
+            else if (local_majority_count < local_minority_count && majority == minority) {
+                // the local minority wins.
+                majority += local_majority_count;
+                minority += local_minority_count;
+                majority_index = master_minority_index;
+            }
+            else if (minority + local_minority_count > majority + local_majority_count) {
+                // majorities do match, BUT the sums are not even, and the local majority 
+                majority += local_majority_count;
+                minority += local_minority_count;
+                majority_index = master_minority_index;
+            }
+        }
+        else if (majority == minority) {
+            // tie
+            majority += local_majority_count;
+            minority += local_minority_count;
+            majority_index = 0;
+        }
+    }
+    else if (majority == minority) {
+        majority_index = 0;
+    }
+
+    // handle when n is not divisible by 4
+    if (n % GROUP_SIZE) {
+        int index = majority_index;
+        group_evener status;
+        if (majority_index == 0) {
+            index = (n - (n % GROUP_SIZE) - GROUP_SIZE) + 1;
+        }
+        printf("Index(before mutation)=%d\t", index);
+        // bring index to power of four
+        index -= (index - 1) % GROUP_SIZE;
+        status = doleftovers(index, n);
+        if (status.status < 0) {
+            if (majority_index == 0) {
+                majority_index = status.minority;
+            }
+        }
+        else if (status.status > 0) {
+            if (majority_index == 0) {
+                majority_index = status.majority;
+            }
+        }
+    }
+    return majority_index;
 }
