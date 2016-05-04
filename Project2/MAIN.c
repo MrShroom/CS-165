@@ -4,16 +4,16 @@
 #include "mysub.c"
 
 main(){
-	int N[3] = {20,200,2000};
+	int N[5] = {10,20,200,2000,10000};
 	int n,ct,loop,round,answer,total,biggest;
 
-	for (round = 0; round<3; round++) {
+	for (round = 0; round<5; round++) {
 		total = 0;
 		biggest = -1;
 		for (loop=1; loop<=10000; loop++) {
 			n = N[round];
 			QCOUNT(0,n);
-			answer = mysub( n , loop);
+			answer = mysub( n );
 			if (answer<0) {
 				printf(" *** flagged error %d at round=%d, loop=%d\n",answer,round,loop);
 				return(0);
@@ -30,4 +30,5 @@ main(){
 			N[round],biggest,total/10000.);
 		fflush(stdout);
 	}
+    system("pause");
 }
