@@ -14,12 +14,6 @@ typedef struct group_t {
     int status;
 } group;
 
-typedef struct group_evener_t {
-    int status;
-    int majority;
-    int minority;
-} group_evener;
-
 void setgroup(group* thegroup, int start) {
     thegroup->indexes[0] = start;
     thegroup->indexes[1] = start + 1;
@@ -35,54 +29,6 @@ group makegroup(int a, int b, int c, int d) {
     thegroup.indexes[2] = c;
     thegroup.indexes[3] = d;
     return thegroup;
-}
-
-group_evener doleftovers(int majority_index, int n) {
-    group g;
-    group_evener evener;
-    setgroup(&g, majority_index);
-    printf("1=%d\t2=%d\t3=%d\t4=%d\n", g.indexes[0], g.indexes[1], g.indexes[2], g.indexes[3]);
-    int i, next, remain = n % GROUP_SIZE, diff = 0;
-    for (next = 0; next < remain; next++) {
-        for (i = 0; i < GROUP_SIZE; i++) {
-            int status, temp = g.indexes[i];
-            g.indexes[i] = next + (n - (n % GROUP_SIZE)) + 1;
-            status = QCOUNT(1, g.indexes); //Marking QCOUNT's 
-            g.indexes[i] = temp;
-
-            if (status == g.status) {
-                if (status == ALL_SAME) {
-                    // awesome. That was easy.
-                    evener.majority = g.indexes[i];
-                    evener.minority = -1;
-                    diff += 1;
-                    break;
-                }
-                else {
-                    // we need a real difference.
-                    continue;
-                }
-            }
-            else {
-                // we can count this item
-                // towards whatever bin.
-                if (status == ALL_SAME || (status == ONE_DIFFERENT && g.status == EVEN_DIVIDE)) {
-                    diff += 1;
-                    evener.majority = next + (n - (n % GROUP_SIZE)) + 1;
-                    evener.minority = g.indexes[i];
-                }
-                else if (status == ONE_DIFFERENT || (status == EVEN_DIVIDE && g.status == ONE_DIFFERENT)) {
-                    diff -= 1;
-                    evener.minority = next + (n - (n % GROUP_SIZE)) + 1;
-                    evener.majority = g.indexes[i];
-                }
-                break;
-            }
-        }
-    }
-    evener.status = diff;
-    printf("status=%d\tmajority=%d\tminority=%d\n", diff, evener.majority, evener.minority);
-    return evener;
 }
 
 void memFreer(group* master_all_same, group* master_3_to_1)
