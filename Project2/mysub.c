@@ -81,23 +81,30 @@ group_evener doleftovers(int majority_index, int n) {
     return evener;
 }
 
+void memFreer(group* master_all_same, group* master_3_to_1)
+{
+    if (master_all_same != NULL)
+        free(master_all_same);
+
+    if (master_3_to_1 != NULL)
+        free(master_3_to_1);
+}
 
 int mysub(int n) {
     int complete_A_count = 0; // will eventually be >= n / 2 
-    int complete_B_count = 0; //keep track in case we need to swap.
+    int complete_B_count = 0; 
     int group_A_index = 0;
-    int group_B_index = -1;
+    int group_B_index = -1; //negitve one means not seen yet
     int seen_a_all_4 = 0;
     int seen_a_3_to_1 = 0;
 
-    // master group is the group that we compare others to check if they are in the majority
-    // slave group is the group that we compare others to check if they are in the minority
+    // master groups are groups that we compare others to. 
     group *master_all_same = NULL;
     group *master_3_to_1 = NULL;
 
-    int group_A_3_to_1_count = 0;
+    int group_A_3_to_1_count = 0; //count of only 3 to 1 used until we find a all same group
     int group_B_3_to_1_count = 0;
-    int group_A_3_to_1_index = -2;//unknown yet
+    int group_A_3_to_1_index = -1; //negitive numbers imply unissaigned indexes
     int group_B_3_to_1_index = -1;
     int index_marker = -1; //index into 3 to 1 master gropup marking a majority element
     int master_group_A_3_to_1_index = 0;
@@ -108,26 +115,25 @@ int mysub(int n) {
     for (i = 1; i <= n - (n % GROUP_SIZE); i += GROUP_SIZE)
     {
         group *current_group = (group*)malloc(sizeof(group));
-        setgroup(current_group, i);// one hidden QCOUNT in set Group
+        setgroup(current_group, i);// one hidden QCOUNT in set Group -- WC happens O(n/4) times
         if (current_group->status == EVEN_DIVIDE)
         {
-            free(current_group);
             complete_A_count += 2;
             complete_B_count += 2;
-
         }
         else if (current_group->status == ALL_SAME)
         {
             if (master_all_same == NULL) {
-                // ASSUME master is majority, may swap later.
                 master_all_same = current_group;
                 group_A_index = master_all_same->indexes[0];
                 complete_A_count += 4;
+
+                //we must add in the 3 to 1 counts up to this point.
                 if (!seen_a_all_4 && seen_a_3_to_1)
                 {
                     group group_to_split_3_to_1s = 
                         makegroup(master_all_same->indexes[0], master_all_same->indexes[1], master_all_same->indexes[2], master_group_A_3_to_1_index);
-                    group_to_split_3_to_1s.status = QCOUNT(1, group_to_split_3_to_1s.indexes);
+                    group_to_split_3_to_1s.status = QCOUNT(1, group_to_split_3_to_1s.indexes); // QCOUNT -- WC happens 1 time O(k)
 
                     if (group_to_split_3_to_1s.status == ALL_SAME)
                     {
@@ -143,10 +149,10 @@ int mysub(int n) {
                     }
                 }
             }
-            else
+            else //we have a master. Use it to find where this group counts to
             {
                 group check = makegroup(master_all_same->indexes[0], master_all_same->indexes[1], master_all_same->indexes[2], current_group->indexes[0]);
-                check.status = QCOUNT(1, check.indexes); //Marking QCOUNT's 
+                check.status = QCOUNT(1, check.indexes); //Marking QCOUNT's --- WC happens (n/4 -1) times - O(n/4)
                 
                 if (check.status == ALL_SAME)
                 {
@@ -157,24 +163,25 @@ int mysub(int n) {
                     complete_B_count += 4;
                     group_B_index = current_group->indexes[0];
                 }
-
+                free(current_group); //done with group 
+                current_group = NULL;
             }
-            seen_a_all_4 = 1;
+            seen_a_all_4 = 1;//mark that we've seem a all same group
         }
-        else if (current_group->status == ONE_DIFFERENT) // This is the only place to reduce number of Qcounts
+        else if (current_group->status == ONE_DIFFERENT) 
         {
-            if (!seen_a_all_4)
+            if (!seen_a_all_4) //if we don't have master all same group we have to use a 3 to 1 group
             {
                 int offset = (current_group->indexes[3] + 1) % (n - (n % GROUP_SIZE));//next index in arrayafter end of bin
                 group check;
                 int j;
-                if (group_A_3_to_1_index < 0)
+                if (group_A_3_to_1_index < 0) //set up our 3 to 1 master
                 {
                     for (j = 0; j < GROUP_SIZE; j++) {
                         check = makegroup(current_group->indexes[0], current_group->indexes[1],
                             current_group->indexes[2], current_group->indexes[3]);
                         check.indexes[j] = offset;
-                        check.status = QCOUNT(1, check.indexes);//Marking QCOUNT's 
+                        check.status = QCOUNT(1, check.indexes);//Marking QCOUNT's  -- WC 3 times O(k)
 
                         if (check.status != ONE_DIFFERENT) {
                             master_3_to_1 = current_group;
@@ -194,7 +201,8 @@ int mysub(int n) {
                         }
                     }
                 }
-                else {
+                else //use our 3 to 1 master to check other counts 
+                {
                     for (j = 0; j < GROUP_SIZE; j++) {
                         check = makegroup(current_group->indexes[0], current_group->indexes[1],
                             current_group->indexes[2], current_group->indexes[3]);
@@ -206,10 +214,10 @@ int mysub(int n) {
                         check.indexes[j] = offset;
                         check_against_master.indexes[index_marker] = current_group->indexes[j];
 
-                        check.status = QCOUNT(1, check.indexes);//Marking QCOUNT's 
+                        check.status = QCOUNT(1, check.indexes);//Marking QCOUNT's -- WC happens at most n/4 - 1 times --- O(n/4)
                         if (check.status == EVEN_DIVIDE)
                         {
-                            check_against_master.status = QCOUNT(1, check_against_master.indexes); //Marking QCOUNT's 
+                            check_against_master.status = QCOUNT(1, check_against_master.indexes); //Marking QCOUNT's -- WC happens at most 4 * (n/4 -1)  times --- O(n)
                             group_A_3_to_1_index = current_group->indexes[j]; // always true.
                             group_B_3_to_1_index = offset;
                             if (check_against_master.status == EVEN_DIVIDE) {
@@ -229,7 +237,7 @@ int mysub(int n) {
                             group_A_3_to_1_index = current_group->indexes[(j + 1) % GROUP_SIZE];
                             check_against_master.indexes[index_marker] = group_A_3_to_1_index;
                             // does it match the majority.
-                            check_against_master.status = QCOUNT(1, check_against_master.indexes);//Marking QCOUNT's 
+                            check_against_master.status = QCOUNT(1, check_against_master.indexes);//Marking QCOUNT's -- WC happens at most 4 * (n/4 -1)  times --- O(n)
                             if (check_against_master.status == EVEN_DIVIDE) {
                                 group_A_3_to_1_count += 1;
                                 group_B_3_to_1_count += 3;
@@ -242,13 +250,8 @@ int mysub(int n) {
                         }
 
                     }
-                }
-
-                // early stopping, here because we have not seen a all same, majority come from even divides
-                if (group_A_3_to_1_count + complete_A_count > (n / 2))
-                {
                     free(current_group);
-                    return master_group_A_3_to_1_index;
+                    current_group = NULL;
                 }
             }
             else //we have a master ALL_SAME
@@ -258,7 +261,7 @@ int mysub(int n) {
                 for (j = 0; j < GROUP_SIZE; j++) {
                     checker = makegroup(current_group->indexes[0], current_group->indexes[1], current_group->indexes[2], current_group->indexes[3]);
                     checker.indexes[j] = group_A_index;
-                    checker.status = QCOUNT(1, checker.indexes);
+                    checker.status = QCOUNT(1, checker.indexes); //QCOUNT --WC happens at most (n / 4 - 1)  times-- - O(n/4)
                     if (checker.status == EVEN_DIVIDE)
                     {
                         complete_B_count += 3;
@@ -282,28 +285,34 @@ int mysub(int n) {
         // early stopping, here because we have not seen a all same, majority come from even divides
         if (!seen_a_all_4 && group_A_3_to_1_count + complete_A_count > (n / 2))
         {
+            memFreer(master_all_same, master_3_to_1);
             return master_group_A_3_to_1_index;
         }
         // early stopping, here because we have not seen a all same, majority come from even divides
         if (!seen_a_all_4 && group_B_3_to_1_count + complete_B_count > (n / 2))
         {
+            memFreer(master_all_same, master_3_to_1);
             return master_group_B_3_to_1_index;
         }
         if (complete_A_count > (n / 2))// early stopping
         {
+            memFreer(master_all_same, master_3_to_1);
             return group_A_index;
         }
         if (complete_B_count > (n / 2))// early stopping
         {
+            memFreer(master_all_same, master_3_to_1);
             return group_B_index;
         }
+        
     }
     
     if (n % GROUP_SIZE) {
         if (seen_a_all_4) {
-            for (; i <= n; i++) {
+            for (; i <= n; i++)  
+            {
                 group check = makegroup(master_all_same->indexes[0], master_all_same->indexes[1], master_all_same->indexes[2], i);
-                check.status = QCOUNT(1, check.indexes); //Marking QCOUNT's 
+                check.status = QCOUNT(1, check.indexes); //Marking QCOUNT's -- WC happens 3 times --O(k)
 
                 if (check.status == ALL_SAME)
                 {
@@ -325,7 +334,7 @@ int mysub(int n) {
 
                     // cell replacement
                     checker.indexes[j] = i;
-                    checker.status = QCOUNT(1, checker.indexes);//Marking QCOUNT's 
+                    checker.status = QCOUNT(1, checker.indexes);//Marking QCOUNT's -- WC happens 12 times --O(k)
                     if (checker.status == EVEN_DIVIDE)
                     {
                         group_B_3_to_1_count++;
@@ -345,7 +354,7 @@ int mysub(int n) {
             group checker = makegroup(check_group_start_index + 1, check_group_start_index + 2, check_group_start_index + 3, check_group_start_index + 4);
             for (; i <= n; i++) {
                 checker.indexes[GROUP_SIZE - 1] = i;
-                checker.status = QCOUNT(1, checker.indexes);
+                checker.status = QCOUNT(1, checker.indexes); //Marking QCOUNT's -- WC happens 12 times --O(k)
                 if (checker.status != EVEN_DIVIDE) {
                     complete_A_count++;
                     group_A_index = i;
@@ -365,6 +374,7 @@ int mysub(int n) {
         group_B_index = master_group_B_3_to_1_index;
     }
 
+    memFreer(master_all_same, master_3_to_1, NULL);
     if (complete_A_count == complete_B_count )
     {
          return 0;
