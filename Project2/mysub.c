@@ -1,3 +1,7 @@
+/*
+*	Shaun McThomas
+*	Ian Swcheer
+*/
 #include <stdlib.h>
 #include <string.h>
 #define ALL_SAME       4
@@ -374,7 +378,7 @@ int mysub(int n) {
         group_B_index = master_group_B_3_to_1_index;
     }
 
-    memFreer(master_all_same, master_3_to_1, NULL);
+    memFreer(master_all_same, master_3_to_1);
     if (complete_A_count == complete_B_count )
     {
          return 0;
