@@ -13,7 +13,7 @@ main(){
 		for (loop=1; loop<=10000; loop++) {
 			n = N[round];
 			QCOUNT(0,n);
-			answer = mysub( n );
+			answer = mysub( n , loop);
 			if (answer<0) {
 				printf(" *** flagged error %d at round=%d, loop=%d\n",answer,round,loop);
 				return(0);
