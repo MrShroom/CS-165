@@ -83,8 +83,6 @@ group_evener doleftovers(int majority_index, int n) {
 
 
 int mysub(int n, int loop) {
-    printf("\nloop %d :\n", loop);
-    QCOUNT(-1);
     int majority = 0; // will eventually be >= n / 2 
     int minority = 0; //keep track in case we need to swap.
     int majority_index = 0;
@@ -135,11 +133,13 @@ int mysub(int n, int loop) {
                     {
                         majority += local_majority_count;
                         minority += local_minority_count;
+						minority_index = master_minority_index;
                     }
                     else
                     {
                         minority += local_majority_count;
                         majority += local_minority_count;
+						minority_index = master_majority_index;
                     }
                 }
             }
@@ -159,20 +159,6 @@ int mysub(int n, int loop) {
                     slave = current_group;
                 }
 
-            }
-            if (minority > majority) {
-                // swap
-                int temp = minority;
-                minority = majority;
-                majority = temp;
-                temp = majority_index;
-                majority_index = minority_index;
-                minority_index = temp;
-
-                // swap the master groups.
-                group *temp_group = master;
-                master = slave;
-                slave = temp_group;
             }
             seen_a_all_4 = 1;
         }
@@ -315,76 +301,6 @@ int mysub(int n, int loop) {
         }
     }
 
-    //if (seen_a_3_to_1) {
-    //    if (!seen_a_all_4)
-    //    {
-    //        if (local_majority_count > local_minority_count)
-    //        {
-    //            majority += local_majority_count;
-    //            minority += local_minority_count;
-    //            majority_index = master_majority_index;
-    //        }
-    //        else if (local_majority_count < local_minority_count)
-    //        {
-    //            majority += local_minority_count;
-    //            minority += local_majority_count;
-    //            majority_index = master_minority_index;
-    //        }
-    //        else
-    //        {
-    //            majority += local_minority_count;
-    //            minority += local_majority_count;
-    //            majority_index = 0;
-    //        }
-    //    }
-    //    else if (local_majority_count != local_minority_count) {
-    //        // make sure our local majority matches the all by 4 majority.
-    //        group temp_group = makegroup(master->indexes[0], master->indexes[1], master->indexes[2],
-    //            master_majority_index);
-    //        int status = QCOUNT(1, temp_group.indexes);//Marking QCOUNT's 
-    //        if (status == ONE_DIFFERENT) {
-    //            // they don't match
-    //            majority += local_minority_count;
-    //            minority += local_majority_count;
-
-    //            if (majority < minority) {
-    //                // swap         
-    //                majority_index = minority_index == -1 ? master_majority_index : minority_index;
-    //            }
-    //            else if (majority == minority) {
-    //                // tie
-    //                majority_index = 0;
-    //            }
-    //        }
-    //        else if (majority + local_majority_count == minority + local_minority_count) {
-    //            // tie
-    //            majority += local_majority_count;
-    //            minority += local_minority_count;
-    //            majority_index = 0;
-    //        }
-    //        else if (local_majority_count < local_minority_count && majority == minority) {
-    //            // the local minority wins.
-    //            majority += local_majority_count;
-    //            minority += local_minority_count;
-    //            majority_index = master_minority_index;
-    //        }
-    //        else if (minority + local_minority_count > majority + local_majority_count) {
-    //            // majorities do match, BUT the sums are not even, and the local majority 
-    //            majority += local_majority_count;
-    //            minority += local_minority_count;
-    //            majority_index = master_minority_index;
-    //        }
-    //    }
-    //    else if (majority == minority) {
-    //        // tie
-    //        majority += local_majority_count;
-    //        minority += local_minority_count;
-    //        majority_index = 0;
-    //    }
-    //}
-    //else if (majority == minority) {
-    //    majority_index = 0;
-    //}
     if (seen_a_all_4 && majority == minority )
     {
             majority_index = 0;
@@ -405,7 +321,6 @@ int mysub(int n, int loop) {
         if (majority_index == 0) {
             index = (n - (n % GROUP_SIZE) - GROUP_SIZE) + 1;
         }
-        printf("Index(before mutation)=%d\t", index);
         // bring index to power of four
         index -= (index - 1) % GROUP_SIZE;
         status = doleftovers(index, n);
