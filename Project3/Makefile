@@ -1,10 +1,10 @@
 GCC=g++
 FLAGS=-std=c++11
-FILES=logger.cpp
+FILES=logger.cpp lempel_ziv.cpp options.cpp
 DFLAGS=-ggdb $(FLAGS)
 all: lz expand
 lz:
-	$(GCC) $(FLAGS) -o LZ $(FILES) lz.cpp
+	$(GCC) $(FLAGS) -o LZ $(FILES) encoder.cpp lz.cpp
 expand:
 	$(GCC) $(FLAGS) -o EXPAND $(FILES) expand.cpp
 
