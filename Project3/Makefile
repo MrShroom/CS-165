@@ -1,8 +1,8 @@
 GCC=g++
 FLAGS=-std=c++11
-SUPPORT_FILES=logger.cpp lempel_ziv.cpp options.cpp
+SUPPORT_FILES=source/logger.cpp source/lempel_ziv.cpp source/options.cpp
 SUPPORT_OBJS=logger.o lempel_ziv.o options.o
-SUPPORT_LIB=supportlib.o
+SUPPORT_LIB=lib/supportlib.a
 DFLAGS=-ggdb $(FLAGS)
 all: lz expand
 lz: support
@@ -14,6 +14,7 @@ expand: support
 support:
 	@$(foreach f,$(SUPPORT_FILES), echo $(f);$(GCC) $(FLAGS) -c $(f);)
 	ar rcs $(SUPPORT_LIB) $(SUPPORT_OBJS)
+	rm $(SUPPORT_OBJS)
 
 debug: debug-lz debug-expand
 
