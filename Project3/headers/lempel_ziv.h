@@ -2,8 +2,8 @@
 #include <vector>
 #include <algorithm>
 #include <string>
-#include "tuplet.h"
-#include "options.h"
+#include <tuplet.h>
+#include <options.h>
 
 #ifndef LEMPELZIV_H
 #define LEMPELZIV_H

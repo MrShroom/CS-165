@@ -1,6 +1,6 @@
 #include <iostream>
-#include "tuplet.h"
-#include "encoder.h"
+#include <tuplet.h>
+#include <encoder.h>
 
 byte *character_encoder::encode(tuplet t) {
 	std::cout << "Tuplet encode has been implemented yet" << std::endl;

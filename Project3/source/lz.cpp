@@ -2,9 +2,9 @@
 #include <unistd.h>
 #include <cmath>
 #include <string>
-#include "logger.h"
-#include "options.h"
-#include "lempel_ziv.h"
+#include <logger.h>
+#include <options.h>
+#include <lempel_ziv.h>
 
 int main(int argc, char** argv) {
 	Options opt = Options::GetOptions(argc, argv);

@@ -5,9 +5,9 @@
 #include <bitset>
 #include <fstream>
 #include <list>
-#include "tuplet.h"
-#include "options.h"
-#include "lempel_ziv.h"
+#include <tuplet.h>
+#include <options.h>
+#include <lempel_ziv.h>
 
 using std::vector;
 constexpr std::size_t BITS_PER_BYTE = std::numeric_limits<byte>::digits;

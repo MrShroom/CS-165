@@ -1,15 +1,15 @@
-GCC=g++
+GCC=g++ -Iheaders
 FLAGS=-std=c++11
-SUPPORT_FILES=source/logger.cpp source/lempel_ziv.cpp source/options.cpp
+SUPPORT_FILES=./source/logger.cpp ./source/lempel_ziv.cpp ./source/options.cpp
 SUPPORT_OBJS=logger.o lempel_ziv.o options.o
-SUPPORT_LIB=lib/supportlib.a
+SUPPORT_LIB=./lib/supportlib.a
 DFLAGS=-ggdb $(FLAGS)
 all: lz expand
 lz: support
-	$(GCC) $(FLAGS) -o LZ $(SUPPORT_LIB) encoder.cpp lz.cpp
+	$(GCC) $(FLAGS) -o LZ $(SUPPORT_LIB) ./source/encoder.cpp ./source/lz.cpp
 
 expand: support
-	$(GCC) $(FLAGS) -o EXPAND $(SUPPORT_LIB) expand.cpp
+	$(GCC) $(FLAGS) -o EXPAND $(SUPPORT_LIB) ./source/decoder.cpp ./source/expand.cpp
 
 support:
 	@$(foreach f,$(SUPPORT_FILES), echo $(f);$(GCC) $(FLAGS) -c $(f);)
@@ -19,10 +19,10 @@ support:
 debug: debug-lz debug-expand
 
 debug-lz: support
-	$(GCC) $(DFLAGS) -o LZ $(SUPPORT_LIB) lz.cpp
+	$(GCC) $(DFLAGS) -o LZ $(SUPPORT_LIB) ./source/encoder.cpp ./source/lz.cpp
 
 debug-expand: support
-	$(GCC) $(DFLAGS) -o EXPAND $(SUPPORT_LIB) expand.cpp
+	$(GCC) $(DFLAGS) -o EXPAND $(SUPPORT_LIB) ./source/expand.cpp
 
 clean: clean-lz clean-expand clean-support
 

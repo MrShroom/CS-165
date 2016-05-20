@@ -1,7 +1,7 @@
 #include <iostream>
 #include <fstream>
 #include <string>
-#include "logger.h"
+#include <logger.h>
 
 LoggerFactory::LoggerImpl *LoggerFactory::_log = nullptr;
 LoggerFactory::Ilogger* LoggerFactory::GetLogger() {
