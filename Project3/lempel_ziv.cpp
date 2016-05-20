@@ -4,6 +4,7 @@
 #include <limits>
 #include <bitset>
 #include <fstream>
+#include <list>
 #include "tuplet.h"
 #include "options.h"
 #include "lempel_ziv.h"

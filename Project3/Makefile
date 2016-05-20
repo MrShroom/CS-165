@@ -1,22 +1,29 @@
 GCC=g++
 FLAGS=-std=c++11
-FILES=logger.cpp lempel_ziv.cpp options.cpp
+SUPPORT_FILES=logger.cpp lempel_ziv.cpp options.cpp
+SUPPORT_OBJS=logger.o lempel_ziv.o options.o
+SUPPORT_LIB=supportlib.o
 DFLAGS=-ggdb $(FLAGS)
 all: lz expand
-lz:
-	$(GCC) $(FLAGS) -o LZ $(FILES) encoder.cpp lz.cpp
-expand:
-	$(GCC) $(FLAGS) -o EXPAND $(FILES) expand.cpp
+lz: support
+	$(GCC) $(FLAGS) -o LZ $(SUPPORT_LIB) encoder.cpp lz.cpp
+
+expand: support
+	$(GCC) $(FLAGS) -o EXPAND $(SUPPORT_LIB) expand.cpp
+
+support:
+	@$(foreach f,$(SUPPORT_FILES), echo $(f);$(GCC) $(FLAGS) -c $(f);)
+	ar rcs $(SUPPORT_LIB) $(SUPPORT_OBJS)
 
 debug: debug-lz debug-expand
 
-debug-lz:
-	$(GCC) $(DFLAGS) -o LZ $(FILES) lz.cpp
+debug-lz: support
+	$(GCC) $(DFLAGS) -o LZ $(SUPPORT_LIB) lz.cpp
 
-debug-expand:
-	$(GCC) $(DFLAGS) -o EXPAND $(FILES) expand.cpp
+debug-expand: support
+	$(GCC) $(DFLAGS) -o EXPAND $(SUPPORT_LIB) expand.cpp
 
-clean: clean-lz clean-expand
+clean: clean-lz clean-expand clean-support
 
 clean-lz:
 	rm LZ
@@ -26,3 +33,5 @@ clean-expand:
 	rm EXPAND
 	rm -rf EXPAND.dSYM 2>/dev/null
 
+clean-support:
+	rm $(SUPPORT_LIB)
