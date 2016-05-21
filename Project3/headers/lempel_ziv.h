@@ -17,6 +17,8 @@ public:
 private:
 	const Options& opt;
 	void read_file_binary();
+	std::string get_tuplet_string(character_tuplet t);
+	std::string get_tuplet_string(string_reference_tuplet t);
 	std::string bits;
 };
 #endif

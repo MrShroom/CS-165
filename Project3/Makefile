@@ -12,7 +12,7 @@ expand: support
 	$(GCC) $(FLAGS) -o EXPAND ./source/decoder.cpp ./source/expand.cpp $(SUPPORT_LIB) 
 
 support:
-	@$(foreach f,$(SUPPORT_FILES), echo $(f);$(GCC) $(FLAGS) -c $(f);)
+	@$(foreach f,$(SUPPORT_FILES), echo $(f);$(GCC) $(DFLAGS) -c $(f);)
 	ar rcs $(SUPPORT_LIB) $(SUPPORT_OBJS)
 	rm $(SUPPORT_OBJS)
 

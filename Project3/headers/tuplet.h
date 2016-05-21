@@ -25,7 +25,7 @@ private:
 	IDecoder *decoder;
 };
 
-class character_tuplet : tuplet {
+class character_tuplet : public tuplet {
 public:
 	character_tuplet() = delete;
 	character_tuplet(int strlen, byte chars[], IEncoder *encoder) : tuplet(true, encoder) {}; // chars will be length strlen
@@ -36,7 +36,7 @@ private:
 	byte chars[];
 };
 
-class string_reference_tuplet : tuplet {
+class string_reference_tuplet : public tuplet {
 public:
 	string_reference_tuplet() = delete;
 	string_reference_tuplet(int len, int offset, IEncoder *encoder) : tuplet(false, encoder) {};
