@@ -20,7 +20,7 @@ public:
 	string getFile() const { return file; }
 	static Options GetOptions(int argc, char** argv);
 private:
-	int powbTwo(int x) const { return pow(4, x); }
+	int powbTwo(int x) const { return pow(2, x); }
 	int N, L, S;
 	const string opts = "N:S:L:";
 	string file;

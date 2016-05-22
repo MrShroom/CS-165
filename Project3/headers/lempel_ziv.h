@@ -1,4 +1,5 @@
 #include <iostream>
+#include <set>
 #include <vector>
 #include <algorithm>
 #include <string>
@@ -11,14 +12,18 @@ using std::vector;
 class LempelZiv {
 public:
 	LempelZiv() = delete;
+	~LempelZiv() { };
 	LempelZiv(const Options& opt);
-	vector<tuplet> compress();
+	vector<tuplet*> compress();
 	vector<tuplet> decompress();
 private:
 	const Options& opt;
-	void read_file_binary();
+	const int min_length = 2;
+	std::string bits;
+	vector<tuplet*> tuplets;
+	std::set<std::string> get_permutations_of_string(std::string str, int length);
 	std::string get_tuplet_string(character_tuplet t);
 	std::string get_tuplet_string(string_reference_tuplet t);
-	std::string bits;
+	void read_file_binary();
 };
 #endif
