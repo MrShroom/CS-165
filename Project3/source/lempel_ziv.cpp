@@ -47,44 +47,30 @@ std::string LempelZiv::get_tuplet_string(string_reference_tuplet t) {
 
 std::set<std::string> LempelZiv::get_permutations_of_string(std::string str, int length) { // O(n - length)
 	std::set<std::string> permutations;
+	if (length >= str.length()) return permutations;
 	for (int i = 0; i < str.length() - length; i++) {
 		permutations.insert(str.substr(i, length + 1));	
 	}
 	return permutations;
 }
 
-// @TODO: @MrShroom: This is where compress will happen
-vector<tuplet*> LempelZiv::compress() {
-	
-	// iterate over our bits to try to find a pattern for reduction.
-	// create a window of size W-F
-	std::string window(std::max((int)bits.length(), opt.getF()), ' ');
-
-	// output N, L, S
-
-	// copy the first F bits
-	window.insert(0, bits, 0, opt.getF());
-	tuplets.push_back(new character_tuplet(0, std::string{bits[0]}, new character_encoder()));
-
-	// match the common longest substring.
-	int start = 1;
+void LempelZiv::compress_window(std::string window, int start) {
 	while (start < window.length()) {
 		bool match = false;
-		int distance = 0, start = 1; // start will act as our window frame
+		int distance = 0; // start will act as our window frame
 		std::string current{window[start]}, buffer(window.substr(0, start));
 		while (distance < start) { // O(N!)
 			std::set<std::string> possible_matches = get_permutations_of_string(buffer, distance);
-			for (const auto& x : possible_matches) std::cout << x << " ";
+			std::cout << buffer << "|" << current << std::endl;
+			if (possible_matches.find(current) != possible_matches.end() && current.length() > min_length) {
+				// @todo: Make distance the distance from start to the index of possible_matches.find
+				tuplets.push_back(new string_reference_tuplet(start, distance, new string_reference_encoder()));	
+				std::cout << "WE HAD A MATCH! :" << current << std::endl;
+				match = true;
+				break;
+			} 
+			current = (distance + 1) < window.length() ? window.substr(start, ++distance + 1) : window.substr(start, distance++);
 			std::cout << std::endl;
-			for (int i = 0; i < start; i++) { 
-				if (possible_matches.find(current) != possible_matches.end() && current.length() > min_length) {
-					// @todo: Make distance the distance from start to the index of possible_matches.find
-					tuplets.push_back(new string_reference_tuplet(start, distance, new string_reference_encoder()));	
-					match = true;
-					break;
-				} 
-			}
-			current = window.substr(start, ++distance);
 		}
 		if (match) {
 			start += distance + 1;
@@ -92,6 +78,28 @@ vector<tuplet*> LempelZiv::compress() {
 			tuplets.push_back(new character_tuplet(1, std::string{window[start]}, new character_encoder()));
 			start++;
 		}
+	}
+}
+// @TODO: @MrShroom: This is where compress will happen
+vector<tuplet*> LempelZiv::compress() {
+	
+	// iterate over our bits to try to find a pattern for reduction.
+	// create a window of size W-F
+	std::string window{bits.substr(0, std::min((int)bits.length(), opt.getF()))};
+
+	// output N, L, S
+
+	// copy the first F bits
+	tuplets.push_back(new character_tuplet(0, std::string{bits[0]}, new character_encoder()));
+
+	// match the common longest substring.
+	int start = 1;
+	while (start < bits.length()) {
+		compress_window(window, 1);
+		start += window.length();
+		std::cout << window << " => ";
+		window = bits.substr(start - 1, std::min((int)bits.length() - start, opt.getF()));
+		std::cout << window << std::endl;
 	}
 	
 	// Search the window to find the longest match with a prefix of the lookahead buffer.
