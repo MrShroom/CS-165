@@ -47,35 +47,38 @@ std::string LempelZiv::get_tuplet_string(string_reference_tuplet t) {
 
 std::set<std::string> LempelZiv::get_permutations_of_string(std::string str, int length) { // O(n - length)
 	std::set<std::string> permutations;
-	if (length >= str.length()) return permutations;
-	for (int i = 0; i < str.length() - length; i++) {
-		permutations.insert(str.substr(i, length + 1));	
+	if (length >= str.length()) {
+		permutations.insert(str);
+		return permutations;
+	}
+	for (int i = 0; i < str.length() - length + 1; i++) {
+		permutations.insert(str.substr(i, length));	
 	}
 	return permutations;
 }
 
-void LempelZiv::compress_window(std::string window, int start) {
+void LempelZiv::compress_window(std::string window, int start, tuplet_count_t& data) {
 	while (start < window.length()) {
 		bool match = false;
-		int distance = 0; // start will act as our window frame
-		std::string current{window[start]}, buffer(window.substr(0, start));
-		while (distance < start) { // O(N!)
+		int distance = std::min(start, (int)window.length() - start); // start will act as our window frame
+		std::string current(window.substr(start, distance)), buffer(window.substr(0, start));
+		while (distance > 0) { // O(N!)
 			std::set<std::string> possible_matches = get_permutations_of_string(buffer, distance);
-			std::cout << buffer << "|" << current << std::endl;
 			if (possible_matches.find(current) != possible_matches.end() && current.length() > min_length) {
 				// @todo: Make distance the distance from start to the index of possible_matches.find
 				tuplets.push_back(new string_reference_tuplet(start, distance, new string_reference_encoder()));	
-				std::cout << "WE HAD A MATCH! :" << current << std::endl;
+				data.string_ref_counts++;
+				data.distro[distance]++;
 				match = true;
 				break;
 			} 
-			current = (distance + 1) < window.length() ? window.substr(start, ++distance + 1) : window.substr(start, distance++);
-			std::cout << std::endl;
+			current = window.substr(start, --distance);
 		}
 		if (match) {
 			start += distance + 1;
 		} else {
 			tuplets.push_back(new character_tuplet(1, std::string{window[start]}, new character_encoder()));
+			data.character_counts++;
 			start++;
 		}
 	}
@@ -92,17 +95,38 @@ vector<tuplet*> LempelZiv::compress() {
 	// copy the first F bits
 	tuplets.push_back(new character_tuplet(0, std::string{bits[0]}, new character_encoder()));
 
+	// for measurment
+	tuplet_count_t analyze;
+	analyze.character_counts = 0;
+	analyze.string_ref_counts = 0;
+	analyze.distro = new int[opt.getF()];
+	for (int i = 0; i < opt.getF(); i++) {
+		analyze.distro[i] = 0;
+	}
+
 	// match the common longest substring.
 	int start = 1;
 	while (start < bits.length()) {
-		compress_window(window, 1);
+		compress_window(window, 1, analyze);
 		start += window.length();
-		std::cout << window << " => ";
 		window = bits.substr(start - 1, std::min((int)bits.length() - start, opt.getF()));
-		std::cout << window << std::endl;
 	}
 	
 	// Search the window to find the longest match with a prefix of the lookahead buffer.
+	std::cout << analyze.character_counts << " new characters\t" << analyze.string_ref_counts << " repeats\n\t";
+	std::cout << "Reduced roughly " << ((double)analyze.string_ref_counts / (double)analyze.character_counts) << " repetitions\n\t";
+	std::cout << std::flush;
+	for (int i = 0; i < analyze.string_ref_counts; i++) {
+		std::cout << "_";
+	}
+	std::cout << std::endl << std::flush;
+	for (int i = 0; i < opt.getF(); i++) {
+		std::cout << i+1 << " " << analyze.distro[i] << "\t|";
+		for (int j = 0; j < analyze.distro[i]; j++) {
+			std::cout << "=";
+		}
+		std::cout << std::endl;
+	}
 	return tuplets;
 }
 

@@ -20,11 +20,16 @@ private:
 	const Options& opt;
 	const int min_length = 1;
 	std::string bits;
+	typedef struct tuplet_counts_s {
+		int character_counts;
+		int string_ref_counts;
+		int *distro;
+	} tuplet_count_t;
 	vector<tuplet*> tuplets;
 	std::set<std::string> get_permutations_of_string(std::string str, int length);
 	std::string get_tuplet_string(character_tuplet t);
 	std::string get_tuplet_string(string_reference_tuplet t);
-	void compress_window(std::string window, int start);
+	void compress_window(std::string window, int start, tuplet_count_t& data);
 	void read_file_binary();
 };
 #endif
