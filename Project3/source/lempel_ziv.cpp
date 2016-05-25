@@ -6,6 +6,7 @@
 #include <fstream>
 #include <string>
 #include <set>
+#include <unordered_map>
 #include <cstring> // strcpy
 #include <tuplet.h>
 #include <options.h>
@@ -15,7 +16,7 @@
 using std::vector;
 constexpr std::size_t BITS_PER_BYTE = std::numeric_limits<byte>::digits;
 using bits_in_byte = std::bitset<BITS_PER_BYTE>;
-LempelZiv::LempelZiv(const Options& opt) : opt(opt), bits{""}, tuplets() {
+LempelZiv::LempelZiv(const Options& opt) : opt(opt), m_bits{""}, m_tuplets() {
 	read_file_binary();	
 }
 
@@ -24,7 +25,7 @@ void LempelZiv::read_file_binary() {
 	std::ifstream file(opt.getFile(), std::ios::binary);
 	char c;
 	while (file.get(c))
-		bits += bits_in_byte(byte(c)).to_string(); // cast necessary due to signdness 
+		m_bits += bits_in_byte(byte(c)).to_string(); // cast necessary due to signdness 
 }
 
 /**
@@ -45,55 +46,52 @@ std::string LempelZiv::get_tuplet_string(string_reference_tuplet t) {
 
 }
 
-std::set<std::string> LempelZiv::get_permutations_of_string(std::string str, int length) { // O(n - length)
-	std::set<std::string> permutations;
-	if (length >= str.length()) {
-		permutations.insert(str);
-		return permutations;
+void LempelZiv::compress_window(std::string window, tuplet_count_t& data) {
+
+    std::unordered_map< std::string, int> bit_pattern_to_index_map;
+    std::unordered_map< int, std::vector<  std::unordered_map< std::string, int>::iterator> > index_to_BiPaInmpItr_map;
+    
+    for(int current_bit_index = 0; current_bit_index < window.size(); current_bit_index++ ) 
+    {	
+        int look_ahead_amount = min(opt.getF(), (int)window.length() - current_bit_index);
+        std::string current_buffer(window.substr(current_bit_index, look_ahead_amount));
+		bool found_and_added_tuple = false;
+
+         while(look_ahead_amount --> 0 )
+         {
+            std::unordered_map< std::string, int>::iterator  biPaToInMa_Itr = bit_pattern_to_index_map.find(current_buffer);
+			if (biPaToInMa_Itr == bit_pattern_to_index_map.end())
+            {
+                bit_pattern_to_index_map.insert(std::make_pair (current_buffer, current_bit_index));
+
+            }else if(!found_and_added_tuple)
+            {
+                int len = current_buffer.size();
+                int offset = current_bit_index - biPaToInMa_Itr -> second; 
+				m_tuplets.push_back(new string_reference_tuplet(len, offset, new string_reference_encoder()));	
+				data.string_ref_counts++;
+				data.distro[len]++;
+				found_and_added_tuple = true;
+			} 
+
+			current_buffer = window.substr(current_bit_index, look_ahead_amount);
+		}
+
+		if (!found_and_added_tuple) {
+			m_tuplets.push_back(new character_tuplet(1, std::string{window[current_bit_index]}, new character_encoder()));
+			data.character_counts++;
+		}
 	}
-	for (int i = 0; i < str.length() - length + 1; i++) {
-		permutations.insert(str.substr(i, length));	
-	}
-	return permutations;
 }
 
-void LempelZiv::compress_window(std::string window, int start, tuplet_count_t& data) {
-	while (start < window.length()) {
-		bool match = false;
-		int distance = std::min(start, (int)window.length() - start); // start will act as our window frame
-		std::string current(window.substr(start, distance)), buffer(window.substr(0, start));
-		while (distance > 0) { // O(N!)
-			std::set<std::string> possible_matches = get_permutations_of_string(buffer, distance);
-			if (possible_matches.find(current) != possible_matches.end() && current.length() > min_length) {
-				// @todo: Make distance the distance from start to the index of possible_matches.find
-				tuplets.push_back(new string_reference_tuplet(start, distance, new string_reference_encoder()));	
-				data.string_ref_counts++;
-				data.distro[distance]++;
-				match = true;
-				break;
-			} 
-			current = window.substr(start, --distance);
-		}
-		if (match) {
-			start += distance + 1;
-		} else {
-			tuplets.push_back(new character_tuplet(1, std::string{window[start]}, new character_encoder()));
-			data.character_counts++;
-			start++;
-		}
-	}
-}
 // @TODO: @MrShroom: This is where compress will happen
 vector<tuplet*> LempelZiv::compress() {
 	
 	// iterate over our bits to try to find a pattern for reduction.
 	// create a window of size W-F
-	std::string window{bits.substr(0, std::min((int)bits.length(), opt.getF()))};
+	std::string window{m_bits.substr(0, std::min((int)m_bits.length(), opt.getW()))};
 
 	// output N, L, S
-
-	// copy the first F bits
-	tuplets.push_back(new character_tuplet(0, std::string{bits[0]}, new character_encoder()));
 
 	// for measurment
 	tuplet_count_t analyze;
@@ -106,28 +104,52 @@ vector<tuplet*> LempelZiv::compress() {
 
 	// match the common longest substring.
 	int start = 1;
-	while (start < bits.length()) {
-		compress_window(window, 1, analyze);
+	while (start < m_bits.length()) {
+		compress_window(window, analyze);
 		start += window.length();
-		window = bits.substr(start - 1, std::min((int)bits.length() - start, opt.getF()));
+		window = m_bits.substr(start - 1, std::min((int)m_bits.length() - start, opt.getF()));
 	}
 	
 	// Search the window to find the longest match with a prefix of the lookahead buffer.
 	std::cout << analyze.character_counts << " new characters\t" << analyze.string_ref_counts << " repeats\n\t";
 	std::cout << "Reduced roughly " << ((double)analyze.string_ref_counts / (double)analyze.character_counts) << " repetitions\n\t";
 	std::cout << std::flush;
-	for (int i = 0; i < analyze.string_ref_counts; i++) {
+	for (int i = 0; i < 90; i++) {
 		std::cout << "_";
 	}
 	std::cout << std::endl << std::flush;
 	for (int i = 0; i < opt.getF(); i++) {
 		std::cout << i+1 << " " << analyze.distro[i] << "\t|";
-		for (int j = 0; j < analyze.distro[i]; j++) {
-			std::cout << "=";
-		}
+        if(analyze.distro[i] < 100)
+        {
+		    for (int j = 0; j < analyze.distro[i]; j++) {
+			    std::cout << "=";
+		    }
+        }
+        else if(analyze.distro[i] < 1000)
+        {
+             for (int j = 0; j < analyze.distro[i]; j+=100 ) {
+			    std::cout << "*";
+		    }
+
+        }
+        else if(analyze.distro[i] < 10000)
+        {
+             for (int j = 0; j < analyze.distro[i]; j+=1000) {
+			    std::cout << "#";
+		    }
+
+        }
+        else
+        {
+             for (int j = 0; j < analyze.distro[i]; j+=10000) {
+			    std::cout << "@";
+		    }
+
+        }
 		std::cout << std::endl;
 	}
-	return tuplets;
+	return m_tuplets;
 }
 
 // @TODO: @MrShroom: This is where decompress will happen
