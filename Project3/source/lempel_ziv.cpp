@@ -69,9 +69,13 @@ void LempelZiv::compress_window(std::string window, tuplet_count_t& data) {
                 int len = current_buffer.size();
                 int offset = current_bit_index - biPaToInMa_Itr -> second; 
 				m_tuplets.push_back(new string_reference_tuplet(len, offset, new string_reference_encoder()));	
-				data.string_ref_counts++;
-				data.distro[len]++;
-				found_and_added_tuple = true;
+                found_and_added_tuple = true;
+                
+                if(opt.getDebug())
+                {
+                    data.string_ref_counts++;
+				    data.distro[len]++;
+				}
 			} 
 
 			current_buffer = window.substr(current_bit_index, look_ahead_amount);
@@ -79,7 +83,8 @@ void LempelZiv::compress_window(std::string window, tuplet_count_t& data) {
 
 		if (!found_and_added_tuple) {
 			m_tuplets.push_back(new character_tuplet(1, std::string{window[current_bit_index]}, new character_encoder()));
-			data.character_counts++;
+            if(opt.getDebug())
+			    data.character_counts++;
 		}
 	}
 }
@@ -89,66 +94,79 @@ vector<tuplet*> LempelZiv::compress() {
 	
 	// iterate over our bits to try to find a pattern for reduction.
 	// create a window of size W-F
-	std::string window{m_bits.substr(0, std::min((int)m_bits.length(), opt.getW()))};
+	std::string window = "" ;
 
 	// output N, L, S
 
-	// for measurment
+    
+	// These only used if in debug mode
+    // for measurment
 	tuplet_count_t analyze;
-	analyze.character_counts = 0;
-	analyze.string_ref_counts = 0;
-	analyze.distro = new int[opt.getF()];
-	for (int i = 0; i < opt.getF(); i++) {
-		analyze.distro[i] = 0;
-	}
+	if(opt.getDebug())
+    {
+        analyze.character_counts = 0;
+        analyze.string_ref_counts = 0;
+        analyze.distro = new int[opt.getF()];
+        for (int i = 0; i < opt.getF(); i++) {
+            analyze.distro[i] = 0;
+        }
+    }
 
-	// match the common longest substring.
-	int start = 1;
-	while (start < m_bits.length()) {
+	// Loop through and compress all windows into vector of tuples.
+	// @TODO this can be parallalized  
+	for(int start = 1; start < m_bits.length(); start += window.length())
+    {
+        if(opt.getDebug())
+        {
+            std::cerr << "compressing:\r";
+
+        }
+		window = m_bits.substr(start - 1, std::min((int)m_bits.length() - start, opt.getW()));
 		compress_window(window, analyze);
-		start += window.length();
-		window = m_bits.substr(start - 1, std::min((int)m_bits.length() - start, opt.getF()));
 	}
 	
-	// Search the window to find the longest match with a prefix of the lookahead buffer.
-	std::cout << analyze.character_counts << " new characters\t" << analyze.string_ref_counts << " repeats\n\t";
-	std::cout << "Reduced roughly " << ((double)analyze.string_ref_counts / (double)analyze.character_counts) << " repetitions\n\t";
-	std::cout << std::flush;
-	for (int i = 0; i < 90; i++) {
-		std::cout << "_";
-	}
-	std::cout << std::endl << std::flush;
-	for (int i = 0; i < opt.getF(); i++) {
-		std::cout << i+1 << " " << analyze.distro[i] << "\t|";
-        if(analyze.distro[i] < 100)
-        {
-		    for (int j = 0; j < analyze.distro[i]; j++) {
-			    std::cout << "=";
-		    }
+	if(opt.getDebug())
+    {
+        // Search the window to find the longest match with a prefix of the lookahead buffer.
+        std::cerr << analyze.character_counts << " new characters\t" << analyze.string_ref_counts << " repeats\n\t";
+        std::cerr << "Reduced roughly " << ((double)analyze.string_ref_counts / (double)analyze.character_counts) << " repetitions\n\t";
+        std::cerr << std::flush;
+        for (int i = 0; i < 90; i++) {
+            std::cerr << "_";
         }
-        else if(analyze.distro[i] < 1000)
-        {
-             for (int j = 0; j < analyze.distro[i]; j+=100 ) {
-			    std::cout << "*";
-		    }
+        std::cerr << std::endl << std::flush;
+        for (int i = 0; i < opt.getF(); i++) {
+            std::cerr << i+1 << " " << analyze.distro[i] << "\t|";
+            if(analyze.distro[i] < 100)
+            {
+                for (int j = 0; j < analyze.distro[i]; j++) {
+                    std::cerr << "=";
+                }
+            }
+            else if(analyze.distro[i] < 1000)
+            {
+                 for (int j = 0; j < analyze.distro[i]; j+=100 ) {
+                    std::cerr << "*";
+                }
 
-        }
-        else if(analyze.distro[i] < 10000)
-        {
-             for (int j = 0; j < analyze.distro[i]; j+=1000) {
-			    std::cout << "#";
-		    }
+            }
+            else if(analyze.distro[i] < 10000)
+            {
+                 for (int j = 0; j < analyze.distro[i]; j+=1000) {
+                    std::cerr << "#";
+                }
 
-        }
-        else
-        {
-             for (int j = 0; j < analyze.distro[i]; j+=10000) {
-			    std::cout << "@";
-		    }
+            }
+            else
+            {
+                 for (int j = 0; j < analyze.distro[i]; j+=10000) {
+                    std::cerr << "@";
+                }
 
+            }
+            std::cerr << std::endl;
         }
-		std::cout << std::endl;
-	}
+    }
 	return m_tuplets;
 }
 

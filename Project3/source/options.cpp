@@ -5,13 +5,17 @@ Options Options::GetOptions(int argc, char** argv) {
 	char c;
 	Options options;
 	while ((c = getopt(argc, argv, options.opts.c_str())) != -1) {
-		string optargStr = optarg;
-		int arg;
-		if (optarg[0] == '=') {
-			arg = std::stoi(optargStr.substr(1));
-		} else {
-			arg = std::stoi(optargStr);
-		}
+		
+        int arg;
+        if(c != 'D')
+        {
+            string optargStr = optarg;
+            if (optarg[0] == '=') {
+                arg = std::stoi(optargStr.substr(1));
+            } else {
+                arg = std::stoi(optargStr);
+            }
+        }
 		switch (c) {
 			case 'N':
 				if (arg < 9 || 14 < arg) {
@@ -37,6 +41,9 @@ Options Options::GetOptions(int argc, char** argv) {
 					options.L = arg;
 				}
 				break;
+           case 'D':
+                options.D = true;
+                break;
 		}
 	}
 

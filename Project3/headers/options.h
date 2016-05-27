@@ -17,12 +17,14 @@ public:
 	int getW() const { return powbTwo(N); } // lazy loading
 	int getF() const { return powbTwo(L) - 1; } // lazy loading
 	int getT() const { return powbTwo(S) - 1; } // lazy loading
+    bool getDebug() const { return D; }
 	string getFile() const { return file; }
 	static Options GetOptions(int argc, char** argv);
 private:
 	int powbTwo(int x) const { return pow(2, x); }
 	int N, L, S;
-	const string opts = "N:S:L:";
+    bool D = false;
+	const string opts = "DN:S:L:";
 	string file;
 };
 
