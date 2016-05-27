@@ -6,9 +6,11 @@ SUPPORT_LIB=./lib/supportlib.a
 DFLAGS=-ggdb $(FLAGS)
 all: lz expand
 lz: support
+	module load gcc/5.2.0 2>/dev/null || echo ""
 	$(GCC) $(FLAGS) -o LZ ./source/encoder.cpp ./source/lz.cpp $(SUPPORT_LIB) 
 
 expand: support
+	module load gcc/5.2.0 2>/dev/null || echo ""
 	$(GCC) $(FLAGS) -o EXPAND ./source/decoder.cpp ./source/expand.cpp $(SUPPORT_LIB) 
 
 support:

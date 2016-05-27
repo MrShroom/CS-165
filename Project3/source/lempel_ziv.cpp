@@ -49,8 +49,8 @@ std::string LempelZiv::get_tuplet_string(string_reference_tuplet t) {
 void LempelZiv::compress_window(std::string window, tuplet_count_t& data) {
 
     std::unordered_map< std::string, int> bit_pattern_to_index_map;
-    std::unordered_map< int, std::vector<  std::unordered_map< std::string, int>::iterator> > index_to_BiPaInmpItr_map;
     
+	// O(wf)
     for(int current_bit_index = 0; current_bit_index < window.size(); current_bit_index++ ) 
     {	
         int look_ahead_amount = min(opt.getF(), (int)window.length() - current_bit_index);
