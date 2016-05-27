@@ -10,7 +10,7 @@ class IDecoder;
 class tuplet {
 public:
 	tuplet() = delete;
-	~tuplet() { std::cout << "deleting tuplet base pointer" << std::endl; }
+	~tuplet() {}// std::cout << "deleting tuplet base pointer" << std::endl; }
 	tuplet(const tuplet &t) : data(t.data), encoded_data(t.encoded_data), encoder(t.encoder), decoder(t.decoder) {};
 	tuplet(bool is_character, IEncoder *encoder) : is_character(is_character), encoder(encoder), data(), encoded_data() {};
 	tuplet(bool is_character, IDecoder *decoder) : is_character(is_character), decoder(decoder), data(), encoded_data() {};

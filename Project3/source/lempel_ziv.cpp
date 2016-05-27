@@ -28,23 +28,6 @@ void LempelZiv::read_file_binary() {
 		m_bits += bits_in_byte(byte(c)).to_string(); // cast necessary due to signdness 
 }
 
-/**
- * get_tuplet_string(character_tuplet)
- *	given a new character template, return the string (essentially, return the character property on the tuplet)
- */
-std::string LempelZiv::get_tuplet_string(character_tuplet t) {
-
-}
-
-/**
- * get_tuplet_string(string_reference_tuplet t)
- *	given a string reference template.
- *	Method will look through the bits string and return
- *	the string pattern matching it.
- */
-std::string LempelZiv::get_tuplet_string(string_reference_tuplet t) {
-
-}
 
 void LempelZiv::compress_window(std::string window, tuplet_count_t& data) {
 
@@ -89,8 +72,8 @@ void LempelZiv::compress_window(std::string window, tuplet_count_t& data) {
 	}
 }
 
-// @TODO: @MrShroom: This is where compress will happen
-vector<tuplet*> LempelZiv::compress() {
+// This is where compress will happen
+vector<char> LempelZiv::compress() {
 	
 	// iterate over our bits to try to find a pattern for reduction.
 	// create a window of size W-F
@@ -114,11 +97,18 @@ vector<tuplet*> LempelZiv::compress() {
 
 	// Loop through and compress all windows into vector of tuples.
 	// @TODO this can be parallalized  
-	for(int start = 1; start < m_bits.length(); start += window.length())
+	std::cerr << "\n";
+    for(int start = 1; start < m_bits.length(); start += window.length())
     {
         if(opt.getDebug())
         {
-            std::cerr << "compressing:\r";
+            std::cerr << "\rcompressing: |";
+            int i;
+            for( i = 0; i < (int)(100 * (double)start /(double) m_bits.length()); i++)
+                std::cerr << "#";
+            for(;i< 100;i++)
+                std::cerr << " ";
+            std::cerr << "|"; 
 
         }
 		window = m_bits.substr(start - 1, std::min((int)m_bits.length() - start, opt.getW()));
@@ -127,8 +117,7 @@ vector<tuplet*> LempelZiv::compress() {
 	
 	if(opt.getDebug())
     {
-        // Search the window to find the longest match with a prefix of the lookahead buffer.
-        std::cerr << analyze.character_counts << " new characters\t" << analyze.string_ref_counts << " repeats\n\t";
+        std::cerr << "\n" << analyze.character_counts << " new characters\t" << analyze.string_ref_counts << " repeats\n\t";
         std::cerr << "Reduced roughly " << ((double)analyze.string_ref_counts / (double)analyze.character_counts) << " repetitions\n\t";
         std::cerr << std::flush;
         for (int i = 0; i < 90; i++) {
@@ -167,11 +156,37 @@ vector<tuplet*> LempelZiv::compress() {
             std::cerr << std::endl;
         }
     }
-	return m_tuplets;
+	return encode();
+}
+
+vector<char> LempelZiv::encode()
+{
+    vector<char> output;
+    string output_bit_string = "";
+
+    //@TODO @IanSchweer The plan here is to loop through all tuplets to create bit string
+    for(int i = 0; i < m_tuplets.size(); i++)
+    {
+        //Please change
+       // m_tuplets[i]->encode(output_bit_string);
+    }
+
+    //@TODO @IanSchweer Then convert bit to vector of char with your voodo
+    return output;
+
 }
 
 // @TODO: @MrShroom: This is where decompress will happen
-vector<tuplet> LempelZiv::decompress() {
-	vector<tuplet> v;
+vector<char> LempelZiv::decompress() {
+
+    decode();
+
+	vector<char> v;
 	return v;
+}
+
+
+void LempelZiv::decode()
+{
+    //m_bit -> m_tuplets
 }
