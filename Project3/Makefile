@@ -5,12 +5,13 @@ SUPPORT_OBJS=logger.o lempel_ziv.o options.o
 SUPPORT_LIB=./lib/supportlib.a
 DFLAGS=-ggdb $(FLAGS)
 all: lz expand
-lz: support
+load-cpp11:
 	module load gcc/5.2.0 2>/dev/null || echo ""
+
+lz: load-cpp11 support
 	$(GCC) $(FLAGS) -o LZ ./source/encoder.cpp ./source/lz.cpp $(SUPPORT_LIB) 
 
-expand: support
-	module load gcc/5.2.0 2>/dev/null || echo ""
+expand: load-cpp11 support
 	$(GCC) $(FLAGS) -o EXPAND ./source/decoder.cpp ./source/expand.cpp $(SUPPORT_LIB) 
 
 support:
@@ -30,11 +31,11 @@ clean: clean-lz clean-expand clean-support
 
 clean-lz:
 	rm LZ
-	rm -rf LZ.dSYM 2>/dev/null
+	rm -rf LZ.dSYM 2>/dev/null || echo ""
 
 clean-expand:
 	rm EXPAND
-	rm -rf EXPAND.dSYM 2>/dev/null
+	rm -rf EXPAND.dSYM 2>/dev/null || echo ""
 
 clean-support:
 	rm $(SUPPORT_LIB)
