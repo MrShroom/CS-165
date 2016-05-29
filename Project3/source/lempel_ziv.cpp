@@ -126,7 +126,8 @@ vector<byte> LempelZiv::compress() {
         }
         std::cerr << std::endl << std::flush;
         for (int i = 0; i < opt.getF(); i++) {
-            std::cerr << i+1 << " " << analyze.distro[i] << "\t|";
+				
+            std::cerr << i+1 << "\t" << analyze.distro[i] << "\t|";
             if(analyze.distro[i] < 100)
             {
                 for (int j = 0; j < analyze.distro[i]; j++) {
@@ -179,6 +180,10 @@ vector<byte> LempelZiv::encode()
 		// if (index == 4)
 		//	flush bitset out too console.
 	// @MrShroom: This is voodoo hoodoo.
+	if(opt.getDebug())
+	{
+		std::cerr << "\rencoding: " << result.size() << " |" << std::endl;
+	}		
 	int index = 0, encryptedcount = 0;
 	std::bitset<4> buffer;
 	buffer.set();

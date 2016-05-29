@@ -26,16 +26,16 @@ Options Options::GetOptions(int argc, char** argv) {
 				}
 				break;
 			case 'S':
-				if (arg < 3 || 4 < arg) {
-					std::cerr << "S argument is out of range. Should be either 3 or 4" << std::endl;
+				if (arg < 1 || 5 < arg) {
+					std::cerr << "S argument is out of range. Should be between 1 and 5" << std::endl;
 					exit(-2);
 				} else {
 					options.S = arg;
 				}
 				break;
 			case 'L':
-				if (arg < 1 || 5 < arg) {
-					std::cerr << "L argument is out of range. Should be between 1 and 5" << std::endl;
+				if (arg < 3 || 4 < arg) {
+					std::cerr << "L argument is out of range. Should be either 3 or 4" << std::endl;
 					exit(-3);
 				} else {
 					options.L = arg;

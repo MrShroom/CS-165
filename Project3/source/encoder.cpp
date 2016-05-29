@@ -21,8 +21,8 @@ byte *string_reference_tuplet::encode(const Options& opt, std::vector<encoded_tu
 	for (int j=0, i = 1; j < opt.getN(); j++, i = i << 1) {
 		bits.set(j, (offset & i) >> j);
 	}
-	std::cerr << "str_ref: " << len << " and " << offset << " encoded too " << bits.to_string();
-	std::cerr << std::endl;
+	// std::cerr << "str_ref: " << len << " and " << offset << " encoded too " << bits.to_string();
+	// std::cerr << std::endl;
 	res.push_back(encoded_tuplet(bits, opt.getL() + opt.getN()));
 	return NULL;
 }
@@ -40,7 +40,7 @@ byte *character_tuplet::encode(const Options& opt, std::vector<encoded_tuplet> &
 	for (int i = 0; i < 4; i++) {
 		bits.set(i, chars[i]);
 	}
-	std::cerr << "char: " << strlen << " and " << c << " encoded too " << bits.to_string() << std::endl;
+	// std::cerr << "char: " << strlen << " and " << c << " encoded too " << bits.to_string() << std::endl;
 	
 	t.push_back(encoded_tuplet(bits, head + 4));
 }
