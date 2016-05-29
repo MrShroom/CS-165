@@ -1,11 +1,11 @@
 #include <iostream>
 #include <bitset>
+#include <vector>
 #include <tuplet.h>
 #include <options.h>
 
-constexpr int MAX_BIT_SET=18;
 constexpr int MAX_CHAR_SET=9;
-byte *string_reference_tuplet::encode(const Options& opt) {
+byte *string_reference_tuplet::encode(const Options& opt, std::vector<encoded_tuplet>& res) {
 	std::bitset<MAX_BIT_SET> bits;
 	int head = opt.getL() + opt.getN();
 	// len is encoded as len - 1
@@ -21,21 +21,27 @@ byte *string_reference_tuplet::encode(const Options& opt) {
 	for (int j=0, i = 1; j < opt.getN(); j++, i = i << 1) {
 		bits.set(j, (offset & i) >> j);
 	}
-	std::cout << "str_ref: " << len << " and " << offset << " encoded too " << bits.to_string();
-	std::cout << std::endl;
+	std::cerr << "str_ref: " << len << " and " << offset << " encoded too " << bits.to_string();
+	std::cerr << std::endl;
+	res.push_back(encoded_tuplet(bits, opt.getL() + opt.getN()));
 	return NULL;
 }
 
-byte *character_tuplet::encode(const Options& opt) {
-	std::bitset<MAX_CHAR_SET> bits;
+byte *character_tuplet::encode(const Options& opt, std::vector<encoded_tuplet> &t) {
+	std::bitset<MAX_BIT_SET> bits;
 	std::bitset<4> chars((byte)c[0]);
 	int head = opt.getL();
 
 	// automatically skip S bits.
 	for (int j=0, i = 1; j < head; j++,i = i<<1) {
-		bits.set(j, (strlen & i) >> j);
+		bits.set(j + 4, (strlen & i) >> j);
 	}
 
-	std::cout << "char: " << strlen << " and " << c << " encoded too " << bits.to_string() << chars.to_string() << std::endl;
+	for (int i = 0; i < 4; i++) {
+		bits.set(i, chars[i]);
+	}
+	std::cerr << "char: " << strlen << " and " << c << " encoded too " << bits.to_string() << std::endl;
+	
+	t.push_back(encoded_tuplet(bits, head + 4));
 }
 

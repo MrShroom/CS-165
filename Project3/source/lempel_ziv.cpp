@@ -25,6 +25,7 @@ void LempelZiv::read_file_binary() {
 	char c;
 	while (file.get(c))
 		m_bits += bits_in_byte(byte(c)).to_string(); // cast necessary due to signdness 
+	std::cerr << "Number of bits to encrypt: " << m_bits.length() << std::endl;
 }
 
 
@@ -73,7 +74,7 @@ void LempelZiv::compress_window(std::string window, tuplet_count_t& data) {
 }
 
 // This is where compress will happen
-vector<char> LempelZiv::compress() {
+vector<byte> LempelZiv::compress() {
 	
 	// iterate over our bits to try to find a pattern for reduction.
 	// create a window of size W-F
@@ -159,21 +160,41 @@ vector<char> LempelZiv::compress() {
 	return encode();
 }
 
-vector<char> LempelZiv::encode()
+vector<byte> LempelZiv::encode()
 {
-    vector<char> output;
+    vector<byte> output;
+	vector<encoded_tuplet> result;
     string output_bit_string = "";
 
-    //@TODO @IanSchweer The plan here is to loop through all tuplets to create bit string
     for(int i = 0; i < m_tuplets.size(); i++)
     {
-        //Please change
-        m_tuplets[i]->encode(opt);
+        m_tuplets[i]->encode(opt, result);
     }
 
-    //@TODO @IanSchweer Then convert bit to vector of char with your voodo
+	// create bitset of length 4, call it A
+	// let index = 0
+	// for each i in vector of { bitset<18>, int count }
+	// 	for j from 0 to count
+		// set A<index++> = i<j>	
+		// if (index == 4)
+		//	flush bitset out too console.
+	// @MrShroom: This is voodoo hoodoo.
+	int index = 0, encryptedcount = 0;
+	std::bitset<4> buffer;
+	buffer.set();
+	for (auto &i : result) {
+		encryptedcount += i.count;
+		for (int j = 0; j < i.count; j++) {
+			buffer.set(index++, i.set[j]);
+			if (index == 4) {
+				output.push_back(static_cast<byte>(buffer.to_ulong()));
+				buffer.set(); // reset too zero;
+				index = 0;
+			}
+		}
+	}
+	std::cerr << "Number of bits encrypted " << encryptedcount << std::endl;
     return output;
-
 }
 
 // @TODO: @MrShroom: This is where decompress will happen

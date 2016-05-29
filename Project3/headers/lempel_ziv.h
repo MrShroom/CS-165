@@ -18,7 +18,7 @@ public:
             delete m_tuplets[i];
     };
 	LempelZiv(const Options& opt);
-	vector<char> compress();
+	vector<unsigned char> compress();
 	vector<char> decompress();
 private:
 	const Options& opt;
@@ -33,7 +33,7 @@ private:
     //member functions
 	void read_file_binary();
 	void compress_window(std::string window, tuplet_count_t& data);
-    vector<char> encode();
+    vector<unsigned char> encode();
     void decode();
 
     //member vars.

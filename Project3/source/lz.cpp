@@ -2,6 +2,7 @@
 #include <unistd.h>
 #include <cmath>
 #include <string>
+#include <stdio.h>
 #include <logger.h>
 #include <options.h>
 #include <lempel_ziv.h>
@@ -10,8 +11,9 @@
 
 int main(int argc, char** argv) {
 	Options opt = Options::GetOptions(argc, argv);
-	std::cout << "opt(N, S, L, file): (" << opt.getN() << "," << opt.getS() << "," << opt.getL() << "," << opt.getFile() << ")" << std::endl;
+	std::cerr << "opt(N, S, L, file): (" << opt.getN() << "," << opt.getS() << "," << opt.getL() << "," << opt.getFile() << ")" << std::endl;
 	LempelZiv ziv(opt);
-	std::vector<char> v = ziv.compress();
+	std::vector<unsigned char> v = ziv.compress();
+	fwrite(&v[0], sizeof(unsigned char), v.size(), stdout);	
 	return 0;
 }
