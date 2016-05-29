@@ -1,30 +1,45 @@
 GCC=g++ -I headers
 FLAGS=-std=c++11
 SUPPORT_FILES=./source/logger.cpp ./source/lempel_ziv.cpp ./source/options.cpp
-SUPPORT_OBJS=logger.o lempel_ziv.o options.o
+SUPPORT_OBJS=obj/logger.o obj/lempel_ziv.o obj/options.o
 SUPPORT_LIB=./lib/supportlib.a
 DFLAGS=-ggdb $(FLAGS)
 all: lz expand
 load-cpp11:
 	module load gcc/5.2.0 2>/dev/null || echo ""
 
-lz: load-cpp11 support
+LZ: load-cpp11 lib/support.a
 	$(GCC) $(FLAGS) -o LZ ./source/encoder.cpp ./source/lz.cpp $(SUPPORT_LIB) 
 
-expand: load-cpp11 support
+expand: load-cpp11 lib/support.a
 	$(GCC) $(FLAGS) -o EXPAND ./source/decoder.cpp ./source/expand.cpp $(SUPPORT_LIB) 
 
-support:
-	@$(foreach f,$(SUPPORT_FILES), echo $(f);$(GCC) $(DFLAGS) -c $(f);)
+lib/support.a: $(SUPPORT_OBJS)
+	mkdir lib 2>/dev/null || echo "lib directory created"
 	ar rcs $(SUPPORT_LIB) $(SUPPORT_OBJS)
-	rm $(SUPPORT_OBJS)
+
+obj/logger.o: source/logger.cpp
+	$(GCC) $(DFLAGS) -c $^
+	mkdir obj 2>/dev/null || echo "obj made"
+	mv logger.o obj/
+
+obj/lempel_ziv.o: source/lempel_ziv.cpp
+	$(GCC) $(DFLAGS) -c $^
+	mkdir obj 2>/dev/null || echo "obj made"
+	mv lempel_ziv.o obj/
+
+obj/options.o: source/options.cpp
+	$(GCC) $(DFLAGS) -c $^
+	mkdir obj 2>/dev/null || echo "obj made"
+	mv options.o obj
+
 
 debug: debug-lz debug-expand
 
-debug-lz: support
+debug-lz: lib/support.a
 	$(GCC) $(DFLAGS) -o LZ ./source/encoder.cpp ./source/lz.cpp $(SUPPORT_LIB) 
 
-debug-expand: support
+debug-expand: lib/support.a
 	$(GCC) $(DFLAGS) -o EXPAND ./source/expand.cpp $(SUPPORT_LIB) 
 
 clean: clean-lz clean-expand clean-support

@@ -6,7 +6,6 @@
 #include <options.h>
 #include <lempel_ziv.h>
 #include <tuplet.h>
-#include <encoder.h>
 #include <vector>
 
 int main(int argc, char** argv) {

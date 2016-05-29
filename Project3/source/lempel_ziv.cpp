@@ -11,7 +11,6 @@
 #include <tuplet.h>
 #include <options.h>
 #include <lempel_ziv.h>
-#include <encoder.h>
 
 using std::vector;
 constexpr std::size_t BITS_PER_BYTE = std::numeric_limits<byte>::digits;
@@ -51,7 +50,8 @@ void LempelZiv::compress_window(std::string window, tuplet_count_t& data) {
             {
                 int len = current_buffer.size();
                 int offset = current_bit_index - biPaToInMa_Itr -> second; 
-				m_tuplets.push_back(new string_reference_tuplet(len, offset, new string_reference_encoder()));	
+				string_reference_tuplet *t = new string_reference_tuplet(len, offset);
+				m_tuplets.push_back(t);	
                 found_and_added_tuple = true;
                 
                 if(opt.getDebug())
@@ -65,7 +65,7 @@ void LempelZiv::compress_window(std::string window, tuplet_count_t& data) {
 		}
 
 		if (!found_and_added_tuple) {
-			m_tuplets.push_back(new character_tuplet(1, std::string{window[current_bit_index]}, new character_encoder()));
+			m_tuplets.push_back(new character_tuplet(1, std::string{window[current_bit_index]}));
             if(opt.getDebug())
 			    data.character_counts++;
 		}
@@ -168,7 +168,7 @@ vector<char> LempelZiv::encode()
     for(int i = 0; i < m_tuplets.size(); i++)
     {
         //Please change
-       // m_tuplets[i]->encode(output_bit_string);
+        m_tuplets[i]->encode(opt);
     }
 
     //@TODO @IanSchweer Then convert bit to vector of char with your voodo
