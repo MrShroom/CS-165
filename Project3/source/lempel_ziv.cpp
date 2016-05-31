@@ -185,13 +185,13 @@ vector<byte> LempelZiv::encode()
 		std::cerr << "\rencoding: " << result.size() << " |" << std::endl;
 	}		
 	int index = 0, encryptedcount = 0;
-	std::bitset<4> buffer;
+	std::bitset<8> buffer;
 	buffer.set();
 	for (auto &i : result) {
 		encryptedcount += i.count;
 		for (int j = 0; j < i.count; j++) {
 			buffer.set(index++, i.set[j]);
-			if (index == 4) {
+			if (index == 8) {
 				output.push_back(static_cast<byte>(buffer.to_ulong()));
 				buffer.set(); // reset too zero;
 				index = 0;
