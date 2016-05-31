@@ -38,37 +38,32 @@ void LempelZiv::compress_window(std::string window, tuplet_count_t& data) {
     bool last_add_was_char_tuplet = false;
     std::cerr <<" window sizse = " << window.size() << std::endl;
     for(int current_bit_index = 0; current_bit_index < window.size(); ) 
-    {	
+    {
+        std::cerr << "~~~~~~~~~~~~~~ current_bit_index = " << current_bit_index << "~~~~~~~~~~~~~~~\n";
         int look_ahead_amount = min(opt.getF(), (int)window.length() - current_bit_index);
         std::string current_buffer(window.substr(current_bit_index, look_ahead_amount));
 		bool found_and_added_tuple = false;
-         while(look_ahead_amount > 0 && current_buffer.size() >= opt.getT())
+         while(look_ahead_amount >= opt.getT())
          {
             std::unordered_map< std::string, int>::iterator  biPaToInMa_Itr = bit_pattern_to_index_map.find(current_buffer);
 			if (biPaToInMa_Itr == bit_pattern_to_index_map.end())
             {
-                std::cerr << "current_bit_index=" << current_bit_index;
-                std::cerr << " look_ahead_amount=" << look_ahead_amount << std::endl;
+                std::cerr << "add to map :\n\tcurrent_bit_index=" << current_bit_index;
+                std::cerr << "\n\tlook_ahead_amount=" << look_ahead_amount << std::endl;
                 std::cerr << std::flush;
                 bit_pattern_to_index_map.insert(std::make_pair (current_buffer, current_bit_index));
 
             }else if(!found_and_added_tuple)
             {
-                if (!(current_bit_index - biPaToInMa_Itr->second)) {
-                    std::cerr << "fuck" << std::endl;
-                    std::cerr << "current_bit_index=" << current_bit_index;
-                    std::cerr << " look_ahead_amount=" << look_ahead_amount << std::endl;
+                    std::cerr << "add to vector\n\tcurrent_bit_index=" << current_bit_index;
+                    std::cerr << "\n\t look_ahead_amount=" << look_ahead_amount << std::endl;
                     std::cerr << std::flush;
-                    int a;
-                    cin >> a;
-                }
                 int len = current_buffer.size();
                 int offset = current_bit_index - biPaToInMa_Itr -> second; 
 				string_reference_tuplet *t = new string_reference_tuplet(len, offset);
 				m_tuplets.push_back(t);	
                 found_and_added_tuple = true;
                 last_add_was_char_tuplet = false;
-                current_bit_index += current_buffer.size();
                 if(opt.getDebug())
                 {
                     data.string_ref_counts++;
@@ -77,7 +72,6 @@ void LempelZiv::compress_window(std::string window, tuplet_count_t& data) {
 			} 
 
 			current_buffer = window.substr(current_bit_index, --look_ahead_amount);
-            std::cerr << "~~~~~~~~~~loop~~~~~~~~~~~~~~\n";
 		}
 
 		if (!found_and_added_tuple) {
@@ -103,6 +97,10 @@ void LempelZiv::compress_window(std::string window, tuplet_count_t& data) {
             if(opt.getDebug())
 			    data.character_counts++;
 		}
+        else
+        {
+            current_bit_index += m_tuplets[m_tuplets.size()-1]->getLen();
+        }
 	}
 }
 
