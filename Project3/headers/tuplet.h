@@ -24,7 +24,10 @@ public:
 	tuplet(const tuplet &t) {};
 	tuplet(bool is_character) : is_character(is_character) {};
 	virtual byte *encode(const Options& opt, std::vector<encoded_tuplet>& result) = 0;
-	bool is_character_reference() { return is_character; };
+	virtual std::string const getC (){ return "";}
+    virtual int getLen() {return 0;}
+    virtual void setC (std::string newC){};
+    bool is_character_reference() { return is_character; };
 private: 
 	bool is_character;
 };
@@ -35,7 +38,14 @@ public:
 	~character_tuplet() { std::cerr << "deleting character_tuplet pointer" << std::endl; }
 	character_tuplet(int _strlen, std::string c) : tuplet(true), strlen(_strlen), c(c) { }; // chars will be length strlen
 	int getCode() { return code; };
-	int getLen() { return strlen; };
+    void setC (std::string newC)
+    {
+        c = newC;
+        strlen= c.length();
+    }
+    std::string const getC() { return c;}
+	int getLen() { 
+        return strlen; };
 	byte *encode(const Options& opt, std::vector<encoded_tuplet>& result);
 private:
 	int code = 0; // Will be L bits

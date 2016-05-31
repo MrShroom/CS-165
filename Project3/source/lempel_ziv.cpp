@@ -34,26 +34,28 @@ void LempelZiv::compress_window(std::string window, tuplet_count_t& data) {
     std::unordered_map< std::string, int> bit_pattern_to_index_map;
     
 	// O(wf)
+    
+    bool last_add_was_char_tuplet = false;
     for(int current_bit_index = 0; current_bit_index < window.size(); current_bit_index++ ) 
     {	
         int look_ahead_amount = min(opt.getF(), (int)window.length() - current_bit_index);
         std::string current_buffer(window.substr(current_bit_index, look_ahead_amount));
 		bool found_and_added_tuple = false;
-
-         while(look_ahead_amount --> 0 )
+         while(look_ahead_amount --> opt.getS() )
          {
             std::unordered_map< std::string, int>::iterator  biPaToInMa_Itr = bit_pattern_to_index_map.find(current_buffer);
 			if (biPaToInMa_Itr == bit_pattern_to_index_map.end())
             {
                 bit_pattern_to_index_map.insert(std::make_pair (current_buffer, current_bit_index));
 
-            }else if(!found_and_added_tuple)
+            }else if(!found_and_added_tuple )
             {
                 int len = current_buffer.size();
                 int offset = current_bit_index - biPaToInMa_Itr -> second; 
 				string_reference_tuplet *t = new string_reference_tuplet(len, offset);
 				m_tuplets.push_back(t);	
                 found_and_added_tuple = true;
+                last_add_was_char_tuplet = false;
                 
                 if(opt.getDebug())
                 {
@@ -66,7 +68,25 @@ void LempelZiv::compress_window(std::string window, tuplet_count_t& data) {
 		}
 
 		if (!found_and_added_tuple) {
-			m_tuplets.push_back(new character_tuplet(1, std::string{window[current_bit_index]}));
+            
+           tuplet* last_tuplet;
+
+            if(last_add_was_char_tuplet )
+            {
+                last_tuplet = m_tuplets[m_tuplets.size()-1];
+                std::string new_bit_string = last_tuplet->getC();
+                m_tuplets[m_tuplets.size() - 1]->setC(new_bit_string);
+               new_bit_string += window[current_bit_index];
+               last_tuplet->setC(new_bit_string); 
+            }
+            else
+            {
+			    m_tuplets.push_back(new character_tuplet(1, std::string{window[current_bit_index]}));
+                last_tuplet =  m_tuplets[m_tuplets.size()-1];
+            }
+
+            last_add_was_char_tuplet =last_tuplet->getLen() >= opt.getS() ? false : true;
+            
             if(opt.getDebug())
 			    data.character_counts++;
 		}
