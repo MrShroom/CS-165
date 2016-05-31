@@ -20,9 +20,9 @@ public:
     bool getDebug() const { return D; }
 	string getFile() const { return file; }
 	static Options GetOptions(int argc, char** argv);
+	int N, L, S;
 private:
 	int powbTwo(int x) const { return pow(2, x); }
-	int N, L, S;
     bool D = false;
 	const string opts = "DN:S:L:";
 	string file;

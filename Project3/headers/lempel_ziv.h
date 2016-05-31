@@ -17,11 +17,12 @@ public:
         for(int i =0; i < m_tuplets.size(); i++)
             delete m_tuplets[i];
     };
-	LempelZiv(const Options& opt);
+	LempelZiv(Options& opt);
 	vector<unsigned char> compress();
-	vector<char> decompress();
+	vector<unsigned char> decompress();
+	int getIntFromString(std::string,int);
 private:
-	const Options& opt;
+	Options& opt;
     
     //This is a debug structure	
     typedef struct tuplet_counts_s {

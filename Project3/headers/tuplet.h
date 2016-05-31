@@ -27,6 +27,7 @@ public:
 	virtual std::string const getC (){ return "";}
     virtual int getLen() {return 0;}
     virtual void setC (std::string newC){};
+	virtual int getOffset() { return 0; }; 
     bool is_character_reference() { return is_character; };
 private: 
 	bool is_character;
