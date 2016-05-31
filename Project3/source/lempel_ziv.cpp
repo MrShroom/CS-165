@@ -36,12 +36,12 @@ void LempelZiv::compress_window(std::string window, tuplet_count_t& data) {
 	// O(wf)
     
     bool last_add_was_char_tuplet = false;
-    for(int current_bit_index = 0; current_bit_index < window.size(); current_bit_index++ ) 
+    for(int current_bit_index = 0; current_bit_index < window.size(); ) 
     {	
         int look_ahead_amount = min(opt.getF(), (int)window.length() - current_bit_index);
         std::string current_buffer(window.substr(current_bit_index, look_ahead_amount));
 		bool found_and_added_tuple = false;
-         while(look_ahead_amount --> opt.getS() )
+         while(look_ahead_amount -- >= opt.getS() )
          {
             std::unordered_map< std::string, int>::iterator  biPaToInMa_Itr = bit_pattern_to_index_map.find(current_buffer);
 			if (biPaToInMa_Itr == bit_pattern_to_index_map.end())
@@ -56,7 +56,7 @@ void LempelZiv::compress_window(std::string window, tuplet_count_t& data) {
 				m_tuplets.push_back(t);	
                 found_and_added_tuple = true;
                 last_add_was_char_tuplet = false;
-                
+                current_bit_index += current_buffer.size();
                 if(opt.getDebug())
                 {
                     data.string_ref_counts++;
@@ -86,7 +86,7 @@ void LempelZiv::compress_window(std::string window, tuplet_count_t& data) {
             }
 
             last_add_was_char_tuplet =last_tuplet->getLen() >= opt.getS() ? false : true;
-            
+            current_bit_index++;
             if(opt.getDebug())
 			    data.character_counts++;
 		}
@@ -204,9 +204,26 @@ vector<byte> LempelZiv::encode()
 	{
 		std::cerr << "\rencoding: " << result.size() << " |" << std::endl;
 	}		
+
 	int index = 0, encryptedcount = 0;
 	std::bitset<8> buffer;
 	buffer.set();
+    // print out N, L, S
+    for (int i = 0; i < 8; i++) {
+        buffer.set(i, ((opt.getN() & (i + 1)) >> i));
+    }
+    std::cerr << opt.getN() << " in binary is " << buffer.to_string() << std::endl;
+
+    for (int i = 0; i < 8; i++) {
+        buffer.set(i, ((opt.getL() & (i + 1)) >> i));
+    }
+    std::cerr << opt.getL() << " in binary is " << buffer.to_string() << std::endl;
+
+    for (int i = 0; i < 8; i++) {
+        buffer.set(i, ((opt.getS() & (i + 1)) >> i));
+    }
+    std::cerr << opt.getS() << " in binary is " << buffer.to_string() << std::endl;
+    buffer.set();
 	for (auto &i : result) {
 		encryptedcount += i.count;
 		for (int j = 0; j < i.count; j++) {
