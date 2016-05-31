@@ -21,6 +21,9 @@ byte *string_reference_tuplet::encode(const Options& opt, std::vector<encoded_tu
 		bits.set(j, (offset & i) >> j);
 	}
 	res.push_back(encoded_tuplet(bits, opt.getL() + opt.getN()));
+	if (opt.getDebug()) {
+		std::cerr << "<" << (len + 1) << ", " << (offset) << "> "<< std::endl;
+	}
 	return NULL;
 }
 
@@ -34,6 +37,9 @@ byte *character_tuplet::encode(const Options& opt, std::vector<encoded_tuplet> &
 
 	for (int i = 0; i < strlen*BITS_PER_BYTE; i++) {
 		bits.set(i, c[strlen*BITS_PER_BYTE - i - 1] == '1');
+	}
+	if (opt.getDebug()) {
+		std::cerr << "<0, " << strlen << ", " << c << "> "<< std::endl;
 	}
 	t.push_back(encoded_tuplet(bits, opt.getS() + opt.getL() + strlen*BITS_PER_BYTE));
 }

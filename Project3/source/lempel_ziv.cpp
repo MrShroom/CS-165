@@ -265,10 +265,9 @@ vector<byte> LempelZiv::decompress() {
         else
         {
             int current_size = m_bits.size();
-            for(int i = 0 ; i < current_tuplet->getLen()*BITS_PER_BYTE; i++)
-            {
-                m_bits += m_bits[current_size + i - (current_tuplet->getOffset()*BITS_PER_BYTE)];
-            }
+			std::cerr << "current tuplet offset = " << current_tuplet->getOffset() << std::endl;
+			std::cerr << "substr = " << m_bits.substr(current_size - (current_tuplet->getOffset()*BITS_PER_BYTE), current_tuplet->getLen() * BITS_PER_BYTE) << std::endl;
+			m_bits += m_bits.substr(current_size - (current_tuplet->getOffset()*BITS_PER_BYTE), current_tuplet->getLen() * BITS_PER_BYTE);
         }
     }
     vector<byte> v;
@@ -279,6 +278,8 @@ vector<byte> LempelZiv::decompress() {
     for (int i = 0; i < m_bits.size(); i++,index--) {
         buffer.set(index, m_bits[i] == '1');
         if (index == 0) {
+			std::cerr << "int val " << buffer.to_ulong();
+			std::cerr << "\tchar val " << static_cast<char>(buffer.to_ulong()) << std::endl;
             v.push_back(static_cast<byte>(buffer.to_ulong()));
             index = 8;
         }
@@ -286,10 +287,10 @@ vector<byte> LempelZiv::decompress() {
 	return v;
 }
 
-int LempelZiv::getIntFromString(std::string str, int total_bits) {
-    int intfromstring = (int)(str[0] == '1');
+unsigned int LempelZiv::getIntFromString(std::string str, int total_bits) {
+    unsigned int intfromstring = (unsigned int)(str[0] == '1');
     for (int i = 1; i < total_bits; i++) {
-        intfromstring = (intfromstring << 1) + ((int)(str[i]) == '1');
+        intfromstring = (intfromstring << 1) + ((unsigned int)(str[i]) == '1');
     }
     return intfromstring;
 }
@@ -301,21 +302,21 @@ void LempelZiv::decode()
     for (int i = 0; i < 8; i++) {
         buffer.set(i, N[7-i] == '1');
     }
-    opt.N = static_cast<int>(buffer.to_ulong());
+    opt.N = static_cast<unsigned int>(buffer.to_ulong());
     buffer.set();
 
     std::string L = m_bits.substr(8, 8);
     for (int i = 0; i < 8; i++) {
         buffer.set(i, L[7-i] == '1');
     }
-    opt.L = static_cast<int>(buffer.to_ulong());
+    opt.L = static_cast<unsigned int>(buffer.to_ulong());
     buffer.set();
 
     std::string S = m_bits.substr(16, 8);
     for (int i = 0; i < 8; i++) {
         buffer.set(i, S[7-i] == '1');
     }
-    opt.S = static_cast<int>(buffer.to_ulong());
+    opt.S = static_cast<unsigned int>(buffer.to_ulong());
 
     std::cerr << "opt(N, L, S) = " << opt.N << "," << opt.L << "," << opt.S << std::endl;
     // next, read L bits. If 0, then read S and strlen.
@@ -325,20 +326,22 @@ void LempelZiv::decode()
     while (true) {
         std::string LBits = remainder.substr(i, opt.L);
         i += opt.L;
-        int L = getIntFromString(LBits, opt.L);
+        unsigned int L = getIntFromString(LBits, opt.L);
         if (!L) {
             // read S bits, make that strlen
             std::string SBits = remainder.substr(i, opt.S);
-            int strlen = getIntFromString(SBits, opt.S);
+            unsigned int strlen = getIntFromString(SBits, opt.S);
             if (!strlen) break;
             i += opt.S;
             std::string characters = remainder.substr(i, strlen*BITS_PER_BYTE);
             i += strlen*BITS_PER_BYTE;
             m_tuplets.push_back(new character_tuplet(strlen, characters));
+			std::cerr << "<0, " << strlen << ", " << characters << ">" << std::endl;
         } else {
             std::string NBits = remainder.substr(i, opt.N);
-            int offset = getIntFromString(NBits, opt.N);
+            unsigned int offset = getIntFromString(NBits, opt.N);
             m_tuplets.push_back(new string_reference_tuplet(L + 1, offset));
+			std::cerr << "<" << (L + 1) << ", " << offset << ">" << std::endl;
             i += opt.N;
         }
     }

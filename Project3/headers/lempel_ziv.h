@@ -20,7 +20,7 @@ public:
 	LempelZiv(Options& opt);
 	vector<unsigned char> compress();
 	vector<unsigned char> decompress();
-	int getIntFromString(std::string,int);
+	unsigned int getIntFromString(std::string,int);
 private:
 	Options& opt;
     
