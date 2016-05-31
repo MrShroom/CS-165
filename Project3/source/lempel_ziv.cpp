@@ -47,13 +47,13 @@ void LempelZiv::compress_window(std::string window, tuplet_count_t& data) {
             std::unordered_map< std::string, int>::iterator  biPaToInMa_Itr = bit_pattern_to_index_map.find(current_buffer);
 			if (biPaToInMa_Itr == bit_pattern_to_index_map.end())
             {
-                bit_pattern_to_index_map.insert(std::make_pair(current_buffer, current_bit_index/BITS_PER_BYTE));
+                bit_pattern_to_index_map.insert(std::make_pair(current_buffer, current_bit_index));
 
             }else if(!found_and_added_tuple)
             {
                 int len = current_buffer.size()/BITS_PER_BYTE;
                 int offset = (current_bit_index - biPaToInMa_Itr->second)/BITS_PER_BYTE; 
-				
+			     std::cerr << "current buff :" << current_buffer.size()  << " bit_in - spot :  " << current_bit_index - biPaToInMa_Itr->second << std::endl; 
                 m_tuplets.push_back(new string_reference_tuplet(len, offset));	
                 
                 found_and_added_tuple = true;
