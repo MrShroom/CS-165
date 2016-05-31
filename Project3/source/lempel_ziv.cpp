@@ -31,39 +31,33 @@ void LempelZiv::read_file_binary() {
 
 void LempelZiv::compress_window(std::string window, tuplet_count_t& data) {
 
+    //bit pattern to index of where it starts
     std::unordered_map< std::string, int> bit_pattern_to_index_map;
     
 	// O(wf)
-    
     bool last_add_was_char_tuplet = false;
-    std::cerr <<" window sizse = " << window.size() << std::endl;
-    for(int current_bit_index = 0; current_bit_index < window.size(); ) 
+    for(int current_bit_index = 0; current_bit_index < window.length(); ) 
     {
-        std::cerr << "~~~~~~~~~~~~~~ current_bit_index = " << current_bit_index << "~~~~~~~~~~~~~~~\n";
         int look_ahead_amount = min(opt.getF(), (int)window.length() - current_bit_index);
         std::string current_buffer(window.substr(current_bit_index, look_ahead_amount));
 		bool found_and_added_tuple = false;
-         while(look_ahead_amount >= opt.getT())
-         {
+        while(look_ahead_amount > 2)
+        {
             std::unordered_map< std::string, int>::iterator  biPaToInMa_Itr = bit_pattern_to_index_map.find(current_buffer);
 			if (biPaToInMa_Itr == bit_pattern_to_index_map.end())
             {
-                std::cerr << "add to map :\n\tcurrent_bit_index=" << current_bit_index;
-                std::cerr << "\n\tlook_ahead_amount=" << look_ahead_amount << std::endl;
-                std::cerr << std::flush;
-                bit_pattern_to_index_map.insert(std::make_pair (current_buffer, current_bit_index));
+                bit_pattern_to_index_map.insert(std::make_pair(current_buffer, current_bit_index));
 
             }else if(!found_and_added_tuple)
             {
-                    std::cerr << "add to vector\n\tcurrent_bit_index=" << current_bit_index;
-                    std::cerr << "\n\t look_ahead_amount=" << look_ahead_amount << std::endl;
-                    std::cerr << std::flush;
                 int len = current_buffer.size();
-                int offset = current_bit_index - biPaToInMa_Itr -> second; 
-				string_reference_tuplet *t = new string_reference_tuplet(len, offset);
-				m_tuplets.push_back(t);	
+                int offset = current_bit_index - biPaToInMa_Itr->second; 
+				
+                m_tuplets.push_back(new string_reference_tuplet(len, offset));	
+                
                 found_and_added_tuple = true;
                 last_add_was_char_tuplet = false;
+                
                 if(opt.getDebug())
                 {
                     data.string_ref_counts++;
@@ -110,7 +104,6 @@ vector<byte> LempelZiv::compress() {
 	// iterate over our bits to try to find a pattern for reduction.
 	// create a window of size W-F
 	std::string window = "" ;
-    std:cerr << "M_bits is " << m_bits << std::endl;
 	// output N, L, S
 
     
@@ -136,21 +129,21 @@ vector<byte> LempelZiv::compress() {
         {
             std::cerr << "\rcompressing: |";
             int i;
-            for( i = 0; i < (int)(100 * (double)start /(double) m_bits.length()); i++)
+            for( i = 0; i <= (int)(100 * (double)start /(double) m_bits.length()); i++)
                 std::cerr << "#";
             for(;i< 100;i++)
                 std::cerr << " ";
             std::cerr << "|"; 
 
         }
-		window = m_bits.substr(start, std::min((int)m_bits.length() - start, opt.getW()));
+		window = m_bits.substr(start, opt.getW());
 		compress_window(window, analyze);
 	}
 	
 	if(opt.getDebug())
     {
         std::cerr << "\n" << analyze.character_counts << " new characters\t" << analyze.string_ref_counts << " repeats\n\t";
-        std::cerr << "Reduced roughly " << ((double)analyze.string_ref_counts / (double)analyze.character_counts) << " repetitions\n\t";
+        std::cerr << "Reduced roughly " << ((double)analyze.string_ref_counts / (double)analyze.character_counts) << " repetitions\n";
         std::cerr << std::flush;
         for (int i = 0; i < 90; i++) {
             std::cerr << "_";
@@ -242,7 +235,7 @@ vector<byte> LempelZiv::encode()
 
 	for (auto &i : result) {
 		encryptedcount += i.count;
-        std::cerr << i.set.to_string() << std::endl;
+       // std::cerr << i.set.to_string().substr(18-i.count) << std::endl;
 		for (int j = 0; j < i.count; j++,index--) {
 			buffer.set(index, i.set[i.count - j - 1]);
 			if (index == 0) {
@@ -253,7 +246,7 @@ vector<byte> LempelZiv::encode()
 		}
 	}
 
-    if (index < 8) {
+    if (index < 7) {
         // fill the remaining bits.
         for (int i = index; i < 8; i++)
             buffer.set(i, 0);
@@ -273,7 +266,6 @@ vector<byte> LempelZiv::decompress() {
         if(current_tuplet->is_character_reference())
         {
             m_bits += current_tuplet->getC();
-            std::cerr << "cr: Added length of " << current_tuplet->getC().size() << " to m_bits" << std::endl;
         }
         else
         {
@@ -282,10 +274,8 @@ vector<byte> LempelZiv::decompress() {
             {
                 m_bits += m_bits[current_size + i - current_tuplet->getOffset()];
             }
-            std::cerr << "sr: Added length of " << current_tuplet->getLen() << " to m_bits" << std::endl;
         }
     }
-    std::cerr << "m_bits = " << m_bits << std::endl;
     vector<byte> v;
 
     std::bitset<8> buffer;
@@ -336,31 +326,24 @@ void LempelZiv::decode()
     // next, read L bits. If 0, then read S and strlen.
     // else, read N bits.
     std::string remainder = m_bits.substr(24);
-    std::cerr << "m_bits = " << m_bits << std::endl;
-    std::cerr << "remainder = " << remainder << std::endl;
     int i = 0;
     while (true) {
         std::string LBits = remainder.substr(i, opt.L);
         i += opt.L;
         int L = getIntFromString(LBits, opt.L);
-        std::cerr << "L = " << L << std::endl;
         if (!L) {
             // read S bits, make that strlen
             std::string SBits = remainder.substr(i, opt.S);
-            std::cerr << "SBits = " << SBits << std::endl;
             int strlen = getIntFromString(SBits, opt.S);
             if (!strlen) break;
-            std::cerr << "strlen=" << strlen << std::endl;
             i += opt.S;
             std::string characters = remainder.substr(i, strlen);
             i += strlen;
             m_tuplets.push_back(new character_tuplet(strlen, characters));
-            std::cerr << "Adding character_tuplet <0," << strlen << ", " << characters << ">" << std::endl;
         } else {
             std::string NBits = remainder.substr(i, opt.N);
             int offset = getIntFromString(NBits, opt.N);
             m_tuplets.push_back(new string_reference_tuplet(L + 1, offset));
-            std::cerr << "Adding string_reference_tuplet <" << (L+1) << ", " << offset << ">" << std::endl;
             i += opt.N;
         }
     }
