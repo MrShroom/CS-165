@@ -141,7 +141,7 @@ vector<byte> LempelZiv::compress() {
 	}
 	
 	if(opt.getDebug())
-    {
+     {
         std::cerr << "\n" << analyze.character_counts << " new characters\t" << analyze.string_ref_counts << " repeats\n\t";
         std::cerr << "Reduced roughly " << ((double)analyze.string_ref_counts / (double)analyze.character_counts) << " repetitions\n";
         std::cerr << std::flush;
