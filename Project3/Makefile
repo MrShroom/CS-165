@@ -40,7 +40,7 @@ debug-lz: lib/support.a
 	$(GCC) $(DFLAGS) -o LZ ./source/encoder.cpp ./source/lz.cpp $(SUPPORT_LIB) 
 
 debug-expand: lib/support.a
-	$(GCC) $(DFLAGS) -o EXPAND ./source/expand.cpp $(SUPPORT_LIB) 
+	$(GCC) $(DFLAGS) -o EXPAND ./source/encoder.cpp ./source/expand.cpp $(SUPPORT_LIB) 
 
 clean: clean-lz clean-expand clean-support
 
