@@ -53,7 +53,6 @@ void LempelZiv::compress_window(std::string window, tuplet_count_t& data) {
                 int offset = (current_bit_index - biPaToInMa_Itr->second)/BITS_PER_BYTE; 
                 m_tuplets.push_back(new string_reference_tuplet(len, offset));	
 
-                
                 found_and_added_tuple = true;
                 last_add_was_char_tuplet = false;
                 
@@ -197,14 +196,6 @@ vector<byte> LempelZiv::encode()
         m_tuplets[i]->encode(opt, result);
     }
 
-	// create bitset of length 4, call it A
-	// let index = 0
-	// for each i in vector of { bitset<18>, int count }
-	// 	for j from 0 to count
-		// set A<index++> = i<j>	
-		// if (index == 4)
-		//	flush bitset out too console.
-	// @MrShroom: This is voodoo hoodoo.
 	int index = 7, encryptedcount = 0;
 	std::bitset<8> buffer;
 	buffer.set();
@@ -229,12 +220,11 @@ vector<byte> LempelZiv::encode()
 
 	for (auto &i : result) {
 		encryptedcount += i.count;
-       // std::cerr << i.set.to_string().substr(18-i.count) << std::endl;
 		for (int j = 0; j < i.count; j++,index--) {
 			buffer.set(index, i.set[i.count - j - 1]);
 			if (index == 0) {
 				output.push_back(static_cast<byte>(buffer.to_ulong()));
-				buffer.set(); // reset too zero;
+				buffer.set(); // reset to zero;
 				index = 8;
 			}
 		}
@@ -252,12 +242,12 @@ vector<byte> LempelZiv::encode()
     return output;
 }
 
-// @TODO: @MrShroom: This is where decompress will happen
+// This is where decompress will happen
 vector<byte> LempelZiv::decompress() {
 
     decode();
     int original_size = m_bits.size();
-	m_bits = "";
+    m_bits = "";
     for(auto &current_tuplet : m_tuplets)
     {
         if(current_tuplet->is_character_reference())
@@ -287,10 +277,10 @@ vector<byte> LempelZiv::decompress() {
         }
         std::cerr << std::flush;
     }
-    std::cerr << "Input length " << original_size << " bits" << std::endl; // 9534144
-    std::cerr << "Output length " << m_bits.size() << " bits" << std::endl;// 6150168
-    std::cerr << "Compression Savings " << std::setprecision(4) << (((m_bits.size()/(original_size*1.0)))*100) << "%"<< std::endl;
-	return v;
+    std::cerr << "Input length " << original_size << " bits" << std::endl; 
+    std::cerr << "Output length " << m_bits.size() << " bits" << std::endl;
+    std::cerr << "Compression Savings " << std::setprecision(4) << ((1.0-(original_size/(m_bits.size()*1.0)))*100) << "%"<< std::endl;
+    return v;
 }
 
 unsigned int LempelZiv::getIntFromString(std::string str, int total_bits) {
@@ -302,7 +292,6 @@ unsigned int LempelZiv::getIntFromString(std::string str, int total_bits) {
 }
 void LempelZiv::decode()
 {
-    read_file_binary();
     std::bitset<8> buffer;
     std::string N = m_bits.substr(0, 8);
     for (int i = 0; i < 8; i++) {
