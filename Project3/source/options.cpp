@@ -18,7 +18,7 @@ Options Options::GetOptions(int argc, char** argv) {
         }
 		switch (c) {
 			case 'N':
-				if (arg < 9 || 14 < arg) {
+				if (arg < 2 || 14 < arg) {
 					std::cerr << "N argument is out of range. Should be between 9 and 14" << std::endl;
 					exit(-1);
 				} else {

@@ -15,6 +15,7 @@
 using std::vector;
 constexpr std::size_t BITS_PER_BYTE = std::numeric_limits<byte>::digits;
 using bits_in_byte = std::bitset<BITS_PER_BYTE>;
+
 LempelZiv::LempelZiv(Options& opt) : opt(opt), m_bits{""}, m_tuplets() {
 	read_file_binary();	
 }
@@ -31,53 +32,41 @@ void LempelZiv::read_file_binary() {
 
 void LempelZiv::compress_window(std::string window, tuplet_count_t& data) {
 
+    //bit pattern to index of where it starts
     std::unordered_map< std::string, int> bit_pattern_to_index_map;
     
 	// O(wf)
-    
     bool last_add_was_char_tuplet = false;
-    std::cerr <<" window sizse = " << window.size() << std::endl;
-    for(int current_bit_index = 0; current_bit_index < window.size(); ) 
-    {	
-        int look_ahead_amount = min(opt.getF(), (int)window.length() - current_bit_index);
+    for(int current_bit_index = 0; current_bit_index <= window.length() ; ) 
+    {
+        int look_ahead_amount = min((int)(opt.getF()*BITS_PER_BYTE),(int)(window.length() - current_bit_index));
         std::string current_buffer(window.substr(current_bit_index, look_ahead_amount));
 		bool found_and_added_tuple = false;
-         while(look_ahead_amount > 0 && current_buffer.size() >= opt.getT())
-         {
+        while(look_ahead_amount > 2*BITS_PER_BYTE )
+        {
             std::unordered_map< std::string, int>::iterator  biPaToInMa_Itr = bit_pattern_to_index_map.find(current_buffer);
 			if (biPaToInMa_Itr == bit_pattern_to_index_map.end())
             {
-                std::cerr << "current_bit_index=" << current_bit_index;
-                std::cerr << " look_ahead_amount=" << look_ahead_amount << std::endl;
-                std::cerr << std::flush;
-                bit_pattern_to_index_map.insert(std::make_pair (current_buffer, current_bit_index));
+                bit_pattern_to_index_map.insert(std::make_pair(current_buffer, current_bit_index));
 
             }else if(!found_and_added_tuple)
             {
-                if (!(current_bit_index - biPaToInMa_Itr->second)) {
-                    std::cerr << "fuck" << std::endl;
-                    std::cerr << "current_bit_index=" << current_bit_index;
-                    std::cerr << " look_ahead_amount=" << look_ahead_amount << std::endl;
-                    std::cerr << std::flush;
-                    int a;
-                    cin >> a;
-                }
-                int len = current_buffer.size();
-                int offset = current_bit_index - biPaToInMa_Itr -> second; 
-				string_reference_tuplet *t = new string_reference_tuplet(len, offset);
-				m_tuplets.push_back(t);	
+                int len = current_buffer.size()/BITS_PER_BYTE;
+                int offset = (current_bit_index - biPaToInMa_Itr->second)/BITS_PER_BYTE; 
+			    std::cerr << "current buff :" << current_buffer.size()  << " bit_in - spot :  " << current_bit_index - biPaToInMa_Itr->second << std::endl; 
+                m_tuplets.push_back(new string_reference_tuplet(len, offset));	
+                
                 found_and_added_tuple = true;
                 last_add_was_char_tuplet = false;
-                current_bit_index += current_buffer.size();
+                
                 if(opt.getDebug())
                 {
                     data.string_ref_counts++;
 				    data.distro[len]++;
 				}
 			} 
-
-			current_buffer = window.substr(current_bit_index, --look_ahead_amount);
-            std::cerr << "~~~~~~~~~~loop~~~~~~~~~~~~~~\n";
+            look_ahead_amount -= BITS_PER_BYTE ;
+			current_buffer = window.substr(current_bit_index, look_ahead_amount);
 		}
 
 		if (!found_and_added_tuple) {
@@ -86,23 +75,26 @@ void LempelZiv::compress_window(std::string window, tuplet_count_t& data) {
 
             if(last_add_was_char_tuplet )
             {
-                last_tuplet = m_tuplets[m_tuplets.size()-1];
-                std::string new_bit_string = last_tuplet->getC();
-                m_tuplets[m_tuplets.size() - 1]->setC(new_bit_string);
-               new_bit_string += window[current_bit_index];
+               last_tuplet = m_tuplets[m_tuplets.size()-1];
+               std::string new_bit_string = last_tuplet->getC();
+               new_bit_string += window.substr(current_bit_index,BITS_PER_BYTE);
                last_tuplet->setC(new_bit_string); 
             }
             else
             {
-			    m_tuplets.push_back(new character_tuplet(1, std::string{window[current_bit_index]}));
+			    m_tuplets.push_back(new character_tuplet(1,window.substr(current_bit_index,BITS_PER_BYTE)));
                 last_tuplet =  m_tuplets[m_tuplets.size()-1];
             }
 
-            last_add_was_char_tuplet =last_tuplet->getLen() >= opt.getT() ? false : true;
-            current_bit_index++;
+            last_add_was_char_tuplet = last_tuplet->getLen() >= opt.getT() ? false : true;
+            current_bit_index += BITS_PER_BYTE;
             if(opt.getDebug())
 			    data.character_counts++;
 		}
+        else
+        {
+            current_bit_index += (m_tuplets[m_tuplets.size()-1]->getLen())*BITS_PER_BYTE;
+        }
 	}
 }
 
@@ -112,7 +104,6 @@ vector<byte> LempelZiv::compress() {
 	// iterate over our bits to try to find a pattern for reduction.
 	// create a window of size W-F
 	std::string window = "" ;
-    std:cerr << "M_bits is " << m_bits << std::endl;
 	// output N, L, S
 
     
@@ -138,21 +129,21 @@ vector<byte> LempelZiv::compress() {
         {
             std::cerr << "\rcompressing: |";
             int i;
-            for( i = 0; i < (int)(100 * (double)start /(double) m_bits.length()); i++)
+            for( i = 0; i <= (int)(100 * (double)start /(double) m_bits.length()); i++)
                 std::cerr << "#";
             for(;i< 100;i++)
                 std::cerr << " ";
             std::cerr << "|"; 
 
         }
-		window = m_bits.substr(start, std::min((int)m_bits.length() - start, opt.getW()));
+		window = m_bits.substr(start, opt.getW()*BITS_PER_BYTE);
 		compress_window(window, analyze);
 	}
 	
 	if(opt.getDebug())
-    {
+     {
         std::cerr << "\n" << analyze.character_counts << " new characters\t" << analyze.string_ref_counts << " repeats\n\t";
-        std::cerr << "Reduced roughly " << ((double)analyze.string_ref_counts / (double)analyze.character_counts) << " repetitions\n\t";
+        std::cerr << "Reduced roughly " << ((double)analyze.string_ref_counts / (double)analyze.character_counts) << " repetitions\n";
         std::cerr << std::flush;
         for (int i = 0; i < 90; i++) {
             std::cerr << "_";
@@ -215,11 +206,6 @@ vector<byte> LempelZiv::encode()
 		// if (index == 4)
 		//	flush bitset out too console.
 	// @MrShroom: This is voodoo hoodoo.
-	if(opt.getDebug())
-	{
-		std::cerr << "\rencoding: " << result.size() << " |" << std::endl;
-	}		
-
 	int index = 7, encryptedcount = 0;
 	std::bitset<8> buffer;
 	buffer.set();
@@ -244,7 +230,7 @@ vector<byte> LempelZiv::encode()
 
 	for (auto &i : result) {
 		encryptedcount += i.count;
-        std::cerr << i.set.to_string() << std::endl;
+       // std::cerr << i.set.to_string().substr(18-i.count) << std::endl;
 		for (int j = 0; j < i.count; j++,index--) {
 			buffer.set(index, i.set[i.count - j - 1]);
 			if (index == 0) {
@@ -255,7 +241,7 @@ vector<byte> LempelZiv::encode()
 		}
 	}
 
-    if (index < 8) {
+    if (index < 7) {
         // fill the remaining bits.
         for (int i = index; i < 8; i++)
             buffer.set(i, 0);
@@ -275,19 +261,15 @@ vector<byte> LempelZiv::decompress() {
         if(current_tuplet->is_character_reference())
         {
             m_bits += current_tuplet->getC();
-            std::cerr << "cr: Added length of " << current_tuplet->getC().size() << " to m_bits" << std::endl;
         }
         else
         {
             int current_size = m_bits.size();
-            for(int i = 0 ; i < current_tuplet->getLen(); i++)
-            {
-                m_bits += m_bits[current_size + i - current_tuplet->getOffset()];
-            }
-            std::cerr << "sr: Added length of " << current_tuplet->getLen() << " to m_bits" << std::endl;
+			std::cerr << "current tuplet offset = " << current_tuplet->getOffset() << std::endl;
+			std::cerr << "substr = " << m_bits.substr(current_size - (current_tuplet->getOffset()*BITS_PER_BYTE), current_tuplet->getLen() * BITS_PER_BYTE) << std::endl;
+			m_bits += m_bits.substr(current_size - (current_tuplet->getOffset()*BITS_PER_BYTE), current_tuplet->getLen() * BITS_PER_BYTE);
         }
     }
-    std::cerr << "m_bits = " << m_bits << std::endl;
     vector<byte> v;
 
     std::bitset<8> buffer;
@@ -296,6 +278,8 @@ vector<byte> LempelZiv::decompress() {
     for (int i = 0; i < m_bits.size(); i++,index--) {
         buffer.set(index, m_bits[i] == '1');
         if (index == 0) {
+			std::cerr << "int val " << buffer.to_ulong();
+			std::cerr << "\tchar val " << static_cast<char>(buffer.to_ulong()) << std::endl;
             v.push_back(static_cast<byte>(buffer.to_ulong()));
             index = 8;
         }
@@ -303,10 +287,10 @@ vector<byte> LempelZiv::decompress() {
 	return v;
 }
 
-int LempelZiv::getIntFromString(std::string str, int total_bits) {
-    int intfromstring = (int)(str[0] == '1');
+unsigned int LempelZiv::getIntFromString(std::string str, int total_bits) {
+    unsigned int intfromstring = (unsigned int)(str[0] == '1');
     for (int i = 1; i < total_bits; i++) {
-        intfromstring = (intfromstring << 1) + ((int)(str[i]) == '1');
+        intfromstring = (intfromstring << 1) + ((unsigned int)(str[i]) == '1');
     }
     return intfromstring;
 }
@@ -318,51 +302,46 @@ void LempelZiv::decode()
     for (int i = 0; i < 8; i++) {
         buffer.set(i, N[7-i] == '1');
     }
-    opt.N = static_cast<int>(buffer.to_ulong());
+    opt.N = static_cast<unsigned int>(buffer.to_ulong());
     buffer.set();
 
     std::string L = m_bits.substr(8, 8);
     for (int i = 0; i < 8; i++) {
         buffer.set(i, L[7-i] == '1');
     }
-    opt.L = static_cast<int>(buffer.to_ulong());
+    opt.L = static_cast<unsigned int>(buffer.to_ulong());
     buffer.set();
 
     std::string S = m_bits.substr(16, 8);
     for (int i = 0; i < 8; i++) {
         buffer.set(i, S[7-i] == '1');
     }
-    opt.S = static_cast<int>(buffer.to_ulong());
+    opt.S = static_cast<unsigned int>(buffer.to_ulong());
 
     std::cerr << "opt(N, L, S) = " << opt.N << "," << opt.L << "," << opt.S << std::endl;
     // next, read L bits. If 0, then read S and strlen.
     // else, read N bits.
     std::string remainder = m_bits.substr(24);
-    std::cerr << "m_bits = " << m_bits << std::endl;
-    std::cerr << "remainder = " << remainder << std::endl;
     int i = 0;
     while (true) {
         std::string LBits = remainder.substr(i, opt.L);
         i += opt.L;
-        int L = getIntFromString(LBits, opt.L);
-        std::cerr << "L = " << L << std::endl;
+        unsigned int L = getIntFromString(LBits, opt.L);
         if (!L) {
             // read S bits, make that strlen
             std::string SBits = remainder.substr(i, opt.S);
-            std::cerr << "SBits = " << SBits << std::endl;
-            int strlen = getIntFromString(SBits, opt.S);
+            unsigned int strlen = getIntFromString(SBits, opt.S);
             if (!strlen) break;
-            std::cerr << "strlen=" << strlen << std::endl;
             i += opt.S;
-            std::string characters = remainder.substr(i, strlen);
-            i += strlen;
+            std::string characters = remainder.substr(i, strlen*BITS_PER_BYTE);
+            i += strlen*BITS_PER_BYTE;
             m_tuplets.push_back(new character_tuplet(strlen, characters));
-            std::cerr << "Adding character_tuplet <0," << strlen << ", " << characters << ">" << std::endl;
+			std::cerr << "<0, " << strlen << ", " << characters << ">" << std::endl;
         } else {
             std::string NBits = remainder.substr(i, opt.N);
-            int offset = getIntFromString(NBits, opt.N);
+            unsigned int offset = getIntFromString(NBits, opt.N);
             m_tuplets.push_back(new string_reference_tuplet(L + 1, offset));
-            std::cerr << "Adding string_reference_tuplet <" << (L+1) << ", " << offset << ">" << std::endl;
+			std::cerr << "<" << (L + 1) << ", " << offset << ">" << std::endl;
             i += opt.N;
         }
     }

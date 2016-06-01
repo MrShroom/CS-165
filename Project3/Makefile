@@ -4,14 +4,14 @@ SUPPORT_FILES=./source/logger.cpp ./source/lempel_ziv.cpp ./source/options.cpp
 SUPPORT_OBJS=obj/logger.o obj/lempel_ziv.o obj/options.o
 SUPPORT_LIB=./lib/supportlib.a
 DFLAGS=-ggdb $(FLAGS)
-all: lz expand
+all: LZ EXPAND
 load-cpp11:
 	module load gcc/5.2.0 2>/dev/null || echo ""
 
 LZ: load-cpp11 lib/support.a
 	$(GCC) $(FLAGS) -o LZ ./source/encoder.cpp ./source/lz.cpp $(SUPPORT_LIB) 
 
-expand: load-cpp11 lib/support.a
+EXPAND: load-cpp11 lib/support.a
 	$(GCC) $(FLAGS) -o EXPAND ./source/decoder.cpp ./source/expand.cpp $(SUPPORT_LIB) 
 
 lib/support.a: $(SUPPORT_OBJS)

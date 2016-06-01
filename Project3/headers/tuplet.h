@@ -8,7 +8,7 @@ using std::vector;
 #ifndef TUPLET_H
 #define TUPLET_H
 using byte = unsigned char;
-constexpr int MAX_BIT_SET=18;
+constexpr int MAX_BIT_SET=265;
 // these will be fused into a byte*
 class encoded_tuplet {
 public:
@@ -42,7 +42,7 @@ public:
     void setC (std::string newC)
     {
         c = newC;
-        strlen= c.length();
+        strlen = c.length()/8;
     }
     std::string const getC() { return c;}
 	int getLen() { 
