@@ -26,7 +26,6 @@ void LempelZiv::read_file_binary() {
 	char c;
 	while (file.get(c))
 		m_bits += bits_in_byte(byte(c)).to_string(); // cast necessary due to signdness 
-	std::cerr << "Number of bits to encrypt: " << m_bits.length() << std::endl;
 }
 
 
@@ -34,7 +33,7 @@ void LempelZiv::compress_window(std::string window, tuplet_count_t& data) {
 
     //bit pattern to index of where it starts
     std::unordered_map< std::string, int> bit_pattern_to_index_map;
-    
+	bool toprint = window.size() < 200;   
 	// O(wf)
     bool last_add_was_char_tuplet = false;
     for(int current_bit_index = 0; current_bit_index < window.length() ; ) 
@@ -53,8 +52,11 @@ void LempelZiv::compress_window(std::string window, tuplet_count_t& data) {
             {
                 int len = current_buffer.size()/BITS_PER_BYTE;
                 int offset = (current_bit_index - biPaToInMa_Itr->second)/BITS_PER_BYTE; 
-			    std::cerr << "current buff :" << current_buffer.size()  << " bit_in - spot :  " << current_bit_index - biPaToInMa_Itr->second << std::endl; 
                 m_tuplets.push_back(new string_reference_tuplet(len, offset));	
+				if (toprint) {
+					std::cerr << "--------------------------------------------------------------------------------" << std::endl;
+					std::cerr << current_buffer << std::endl;
+				}
                 
                 found_and_added_tuple = true;
                 last_add_was_char_tuplet = false;
@@ -85,6 +87,10 @@ void LempelZiv::compress_window(std::string window, tuplet_count_t& data) {
 			    m_tuplets.push_back(new character_tuplet(1,window.substr(current_bit_index,BITS_PER_BYTE)));
                 last_tuplet =  m_tuplets[m_tuplets.size()-1];
             }
+			if (toprint) {
+				std::cerr << "--------------------------------------------------------------------------------" << std::endl;
+				std::cerr << window.substr(current_bit_index,BITS_PER_BYTE) << std::endl;
+			}
 
             last_add_was_char_tuplet = last_tuplet->getLen() >= opt.getT() ? false : true;
             current_bit_index += BITS_PER_BYTE;
@@ -269,8 +275,11 @@ vector<byte> LempelZiv::decompress() {
         {
             int current_size = m_bits.size();
 			std::cerr << "current tuplet offset = " << current_tuplet->getOffset() << std::endl;
-			std::cerr << "substr = " << m_bits.substr(current_size - (current_tuplet->getOffset()*BITS_PER_BYTE), current_tuplet->getLen() * BITS_PER_BYTE) << std::endl;
-			m_bits += m_bits.substr(current_size - (current_tuplet->getOffset()*BITS_PER_BYTE), current_tuplet->getLen() * BITS_PER_BYTE);
+            for(int i = 0 ; i < (current_tuplet->getLen()*BITS_PER_BYTE); i++)
+            {
+                //                bits                   this is in bytes             to bits
+                m_bits += m_bits[current_size + i - (current_tuplet->getOffset() * BITS_PER_BYTE)];
+            }
         }
     }
     vector<byte> v;
@@ -279,14 +288,18 @@ vector<byte> LempelZiv::decompress() {
     int index = 7;
     buffer.set();
     for (int i = 0; i < m_bits.size(); i++,index--) {
+        std::cerr << "setting bit index " << index << std::endl;
         buffer.set(index, m_bits[i] == '1');
         if (index == 0) {
-			std::cerr << "int val " << buffer.to_ulong();
+			// std::cerr << "int val " << buffer.to_ulong();
 			std::cerr << "\tchar val " << static_cast<char>(buffer.to_ulong()) << std::endl;
+            std::cerr << "**flushing characters" << std::endl;
             v.push_back(static_cast<byte>(buffer.to_ulong()));
             index = 8;
         }
+        std::cerr << std::flush;
     }
+    std::cerr << "index is " << index << std::endl;
 	return v;
 }
 
