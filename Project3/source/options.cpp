@@ -57,10 +57,6 @@ Options Options::GetOptions(int argc, char** argv) {
 			}
 		} 
 	}
-	if (options.file.empty()) {
-		std::cerr << "No file name!" << std::endl;
-		exit(-4);
-	}
 	return options;
 }
 

@@ -22,7 +22,12 @@ LempelZiv::LempelZiv(Options& opt) : opt(opt), m_bits{""}, m_tuplets() {
 
 // code reference: http://www.cplusplus.com/forum/general/119145/
 void LempelZiv::read_file_binary() {
-	std::ifstream file(opt.getFile(), std::ios::binary);
+	std::ifstream file;
+	if (opt.getFile() != "") {
+		file.open(opt.getFile(), std::ios::binary);
+	} else {
+		file.open("/dev/stdin", std::ios::binary);	
+	}
 	char c;
 	while (file.get(c))
 		m_bits += bits_in_byte(byte(c)).to_string(); // cast necessary due to signdness 
