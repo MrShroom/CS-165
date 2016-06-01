@@ -37,7 +37,7 @@ void LempelZiv::compress_window(std::string window, tuplet_count_t& data) {
     
 	// O(wf)
     bool last_add_was_char_tuplet = false;
-    for(int current_bit_index = 0; current_bit_index < window.length()-8 ; ) 
+    for(int current_bit_index = 0; current_bit_index <= window.length() ; ) 
     {
         int look_ahead_amount = min((int)(opt.getF()*BITS_PER_BYTE),(int)(window.length() - current_bit_index));
         std::string current_buffer(window.substr(current_bit_index, look_ahead_amount));
@@ -53,7 +53,7 @@ void LempelZiv::compress_window(std::string window, tuplet_count_t& data) {
             {
                 int len = current_buffer.size()/BITS_PER_BYTE;
                 int offset = (current_bit_index - biPaToInMa_Itr->second)/BITS_PER_BYTE; 
-			     std::cerr << "current buff :" << current_buffer.size()  << " bit_in - spot :  " << current_bit_index - biPaToInMa_Itr->second << std::endl; 
+			    std::cerr << "current buff :" << current_buffer.size()  << " bit_in - spot :  " << current_bit_index - biPaToInMa_Itr->second << std::endl; 
                 m_tuplets.push_back(new string_reference_tuplet(len, offset));	
                 
                 found_and_added_tuple = true;
